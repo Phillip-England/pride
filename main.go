@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/Phillip-England/pride/pride"
+	"github.com/Phillip-England/pride/internal/cmd"
 )
 
 func main() {
-	cmd, err := pride.CmdNew()
+	cmd, err := cmd.NewCmd()
 	if err != nil {
 		err.Handle()
 		return

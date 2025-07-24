@@ -1,4 +1,4 @@
-package pride
+package site
 
 import (
 	"fmt"
@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type FileConfig struct {
+type Config struct {
 	Path    string
 	Text    string
 	Dob     string
@@ -16,8 +17,8 @@ type FileConfig struct {
 	Server  string
 }
 
-func FileConfigNew(path string) FileConfig {
-	var config FileConfig
+func ConfigNew(path string) Config {
+	var config Config
 	config.Path = path
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
 	config.Version = "0.0.1"
@@ -28,34 +29,34 @@ server = "%s"`, config.Version, config.Dob, config.Server)
 	return config
 }
 
-func FileConfigLoadFromCwd() (FileConfig, SysErr) {
-	var config FileConfig
+func ConfigLoadFromCwd() (Config, syserr.SysErr) {
+	var config Config
 	configPath := "./pride.toml"
 	_, err := os.Stat(configPath)
 	if err != nil {
-		return config, SysErrNew(SysErrCodeMia, fmt.Errorf("failed to located %s", configPath))
+		return config, syserr.New(syserr.CodeMia, fmt.Errorf("failed to located %s", configPath))
 	}
 	file, err := os.ReadFile(configPath)
 	if err != nil {
-		return config, SysErrNew(SysErrCodeMia, fmt.Errorf("failed to read %s", configPath))
+		return config, syserr.New(syserr.CodeMia, fmt.Errorf("failed to read %s", configPath))
 	}
 	config.Text = string(file)
 	config.Path = configPath
 	if _, err := toml.DecodeFile(config.Path, &config); err != nil {
-		return config, SysErrNew(SysErrCodeDev, fmt.Errorf("failed to decode %s, at this point, the file has been verified as existing, so this is a developer error", config.Path))
+		return config, syserr.New(syserr.CodeDev, fmt.Errorf("failed to decode %s, at this point, the file has been verified as existing, so this is a developer error", config.Path))
 	}
 	return config, nil
 }
 
-func (config FileConfig) Create() SysErr {
+func (config Config) Create() syserr.SysErr {
 	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when creating %s", config.Path))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s", config.Path))
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(config.Text))
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when writing to %s", config.Path))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when writing to %s", config.Path))
 	}
 	return nil
 }

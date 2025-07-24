@@ -1,4 +1,4 @@
-package pride
+package syserr
 
 import (
 	"fmt"
@@ -7,27 +7,27 @@ import (
 	"github.com/fatih/color"
 )
 
-type ErrDev struct {
+type Dev struct {
 	message string
 	code    ErrCode
 }
 
-func ErrDevNew(code ErrCode, err error) ErrDev {
-	return ErrDev{
+func DevNew(code ErrCode, err error) Dev {
+	return Dev{
 		message: err.Error(),
 		code:    code,
 	}
 }
 
-func (err ErrDev) GetCode() ErrCode {
+func (err Dev) GetCode() ErrCode {
 	return err.code
 }
 
-func (err ErrDev) GetMessage() string {
+func (err Dev) GetMessage() string {
 	return err.message
 }
 
-func (err ErrDev) Handle() {
+func (err Dev) Handle() {
 	fmt.Println("this error occurred because of a developer mistake:")
 	color.Red(err.message)
 	os.Exit(1)

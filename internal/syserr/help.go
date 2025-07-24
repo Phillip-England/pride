@@ -1,4 +1,4 @@
-package pride
+package syserr
 
 import (
 	"fmt"
@@ -7,27 +7,27 @@ import (
 	"github.com/fatih/color"
 )
 
-type ErrHelp struct {
+type Help struct {
 	message string
 	code    ErrCode
 }
 
-func ErrHelpNew(code ErrCode, err error) ErrHelp {
-	return ErrHelp{
+func HelpNew(code ErrCode, err error) Help {
+	return Help{
 		message: err.Error(),
 		code:    code,
 	}
 }
 
-func (err ErrHelp) GetCode() ErrCode {
+func (err Help) GetCode() ErrCode {
 	return err.code
 }
 
-func (err ErrHelp) GetMessage() string {
+func (err Help) GetMessage() string {
 	return err.message
 }
 
-func (err ErrHelp) Handle() {
+func (err Help) Handle() {
 	fmt.Println("ops! error encountered, run 'pride help' for more info:")
 	color.Red(err.message)
 	os.Exit(1)

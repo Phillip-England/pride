@@ -1,12 +1,14 @@
-package pride
+package site
 
 import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type DirRoot struct {
+type Root struct {
 	PathRoot         string
 	PathContent      string
 	PathConfig       string
@@ -19,8 +21,8 @@ type DirRoot struct {
 	PathContentBase  string
 }
 
-func DirRootNew(path string) DirRoot {
-	var dir DirRoot
+func RootNew(path string) Root {
+	var dir Root
 	dir.PathRoot = path
 	dir.PathContent = path + "/content"
 	dir.PathStatic = path + "/static"
@@ -34,13 +36,13 @@ func DirRootNew(path string) DirRoot {
 	return dir
 }
 
-func (dir DirRoot) Create() SysErr {
+func (dir Root) Create() syserr.SysErr {
 	err := os.Mkdir(dir.PathRoot, 0755)
 	if err != nil {
 		if strings.Contains(err.Error(), "file exists") {
-			return SysErrNew(SysErrCodeHelp, fmt.Errorf("<DESTINATION> %s already exists, please provide a new name or delete %s", dir.PathRoot, dir.PathRoot))
+			return syserr.New(syserr.CodeHelp, fmt.Errorf("<DESTINATION> %s already exists, please provide a new name or delete %s", dir.PathRoot, dir.PathRoot))
 		}
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("<DESTINATION> unanticipated error when creating %s, are you using a valid directory name for your site?", dir.PathRoot))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("<DESTINATION> unanticipated error when creating %s, are you using a valid directory name for your site?", dir.PathRoot))
 
 	}
 	dirsToMake := []string{
@@ -52,30 +54,30 @@ func (dir DirRoot) Create() SysErr {
 	for _, dir := range dirsToMake {
 		err = os.Mkdir(dir, 0755)
 		if err != nil {
-			return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when creating %s", dir))
+			return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s", dir))
 		}
 	}
-	config := FileConfigNew(dir.PathConfig)
+	config := ConfigNew(dir.PathConfig)
 	syserr := config.Create()
 	if syserr != nil {
 		return syserr
 	}
-	layout := FileLayoutBaseNew(dir.PathLayoutBase)
+	layout := LayoutNew(dir.PathLayoutBase)
 	syserr = layout.Create()
 	if syserr != nil {
 		return syserr
 	}
-	template := FileTemplateBaseNew(dir.PathTemplateBase)
+	template := TemplateNew(dir.PathTemplateBase)
 	syserr = template.Create()
 	if syserr != nil {
 		return syserr
 	}
-	css := FileCssBaseNew(dir.PathCssBase)
+	css := CssNew(dir.PathCssBase)
 	syserr = css.Create()
 	if syserr != nil {
 		return syserr
 	}
-	md := FileContentBaseNew(dir.PathContentBase)
+	md := ContentNew(dir.PathContentBase)
 	syserr = md.Create()
 	if syserr != nil {
 		return syserr

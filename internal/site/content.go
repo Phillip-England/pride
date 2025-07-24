@@ -1,20 +1,22 @@
-package pride
+package site
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type FileContentBase struct {
+type Content struct {
 	Path string
 	Text string
 	Dob  string
 }
 
-func FileContentBaseNew(path string) FileContentBase {
-	var f FileContentBase
+func ContentNew(path string) Content {
+	var f Content
 	f.Path = path
 	f.Dob = time.Now().UTC().Format(time.RFC3339)
 	f.Text = fmt.Sprintf(`---
@@ -31,20 +33,20 @@ This is the home page!
 	return f
 }
 
-func (f FileContentBase) Create() SysErr {
+func (f Content) Create() syserr.SysErr {
 	dir := filepath.Dir(f.Path)
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("failed to create parent directories for %s => %s", f.Path, err.Error()))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("failed to create parent directories for %s => %s", f.Path, err.Error()))
 	}
 	file, err := os.OpenFile(f.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when creating %s => %s", f.Path, err.Error()))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s => %s", f.Path, err.Error()))
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(f.Text))
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when writing to %s => %s", f.Path, err.Error()))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when writing to %s => %s", f.Path, err.Error()))
 	}
 	return nil
 }

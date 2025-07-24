@@ -1,4 +1,4 @@
-package pride
+package syserr
 
 import (
 	"fmt"
@@ -7,27 +7,27 @@ import (
 	"github.com/fatih/color"
 )
 
-type ErrDefault struct {
+type Default struct {
 	message string
 	code    ErrCode
 }
 
-func ErrDefaultNew(code ErrCode, err error) ErrDefault {
-	return ErrDefault{
+func DefaultNew(code ErrCode, err error) Default {
+	return Default{
 		message: err.Error(),
 		code:    code,
 	}
 }
 
-func (err ErrDefault) GetCode() ErrCode {
+func (err Default) GetCode() ErrCode {
 	return err.code
 }
 
-func (err ErrDefault) GetMessage() string {
+func (err Default) GetMessage() string {
 	return err.message
 }
 
-func (err ErrDefault) Handle() {
+func (err Default) Handle() {
 	fmt.Println("running the default error handler, here is your message:")
 	color.Red("[ERROR_MESSAGE]: %s", err.message)
 	os.Exit(1)

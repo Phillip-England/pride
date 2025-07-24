@@ -1,17 +1,19 @@
-package pride
+package site
 
 import (
 	"fmt"
 	"os"
+
+	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type FileLayoutBase struct {
+type Layout struct {
 	Path string
 	Text string
 }
 
-func FileLayoutBaseNew(path string) FileLayoutBase {
-	var config FileLayoutBase
+func LayoutNew(path string) Layout {
+	var config Layout
 	config.Path = path
 	config.Text = `<!DOCTYPE html>
 <html lang="en">
@@ -33,15 +35,15 @@ func FileLayoutBaseNew(path string) FileLayoutBase {
 	return config
 }
 
-func (f FileLayoutBase) Create() SysErr {
+func (f Layout) Create() syserr.SysErr {
 	file, err := os.OpenFile(f.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when creating %s", f.Path))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s", f.Path))
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(f.Text))
 	if err != nil {
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("unanticipated error when writing to %s", f.Path))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when writing to %s", f.Path))
 	}
 	return nil
 }

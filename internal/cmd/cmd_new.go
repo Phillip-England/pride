@@ -1,34 +1,36 @@
-package pride
+package cmd
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type CmdMake struct {
-	Flag                   CmdFlag
+type New struct {
+	Flag                   Flag
 	ArgMakeType            string
 	ArgDestination         string
 	ArgDestinationStripped string
 	MakeType               makeType
 }
 
-func CmdMakeNew(flag CmdFlag) (*CmdMake, SysErr) {
-	cmd := &CmdMake{}
+func NewNew(flag Flag) (*New, syserr.SysErr) {
+	cmd := &New{}
 	argMakeType, err := GetArg(2)
 	if err != nil {
-		return cmd, SysErrNew(SysErrCodeHelp, fmt.Errorf("missing <CONTENT_TYPE> and <DESTINATION> in 'pride make'"))
+		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <CONTENT_TYPE> and <DESTINATION> in 'pride make'"))
 	}
 	makeType, err := makeTypeNew(argMakeType)
 	if err != nil {
-		return cmd, SysErrNew(SysErrCodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
+		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
 	}
 	cmd.Flag = flag
 	cmd.ArgMakeType = argMakeType
 	cmd.MakeType = makeType
 	argDestination, err := GetArg(3)
 	if err != nil {
-		return cmd, SysErrNew(SysErrCodeHelp, fmt.Errorf("missing <DESTINATION> in 'pride make'"))
+		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <DESTINATION> in 'pride make'"))
 	}
 	cmd.ArgDestination = argDestination
 	if strings.HasPrefix(cmd.ArgDestination, "./") {
@@ -41,14 +43,14 @@ func CmdMakeNew(flag CmdFlag) (*CmdMake, SysErr) {
 	return cmd, nil
 }
 
-func (cmd CmdMake) GetFlag() CmdFlag {
+func (cmd New) GetFlag() Flag {
 	return cmd.Flag
 }
 
-func (cmd CmdMake) Exec() SysErr {
+func (cmd New) Exec() syserr.SysErr {
 	switch cmd.MakeType {
 	case makeTypeSite:
-		op, err := OpNew(OpCodeMakeSite, cmd)
+		op, err := OpNew(CodeMakeSite, cmd)
 		if err != nil {
 			return err
 		}
@@ -58,7 +60,7 @@ func (cmd CmdMake) Exec() SysErr {
 		}
 		return nil
 	case makeTypeContent:
-		op, err := OpNew(OpCodeMakeContent, cmd)
+		op, err := OpNew(CodeMakeContent, cmd)
 		if err != nil {
 			return err
 		}
@@ -68,7 +70,7 @@ func (cmd CmdMake) Exec() SysErr {
 		}
 		return nil
 	default:
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
+		return syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
 	}
 }
 
