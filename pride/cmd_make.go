@@ -2,35 +2,42 @@ package pride
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
 type CmdMake struct {
-	Flag           CmdFlag
-	ArgContentType string
-	ArgDestination string
-	ContentType    contentType
+	Flag                   CmdFlag
+	ArgMakeType            string
+	ArgDestination         string
+	ArgDestinationStripped string
+	MakeType               makeType
 }
 
 func CmdMakeNew(flag CmdFlag) (*CmdMake, SysErr) {
 	cmd := &CmdMake{}
-	argContentType, err := GetArg(2)
+	argMakeType, err := GetArg(2)
 	if err != nil {
 		return cmd, SysErrNew(SysErrCodeHelp, fmt.Errorf("missing <CONTENT_TYPE> and <DESTINATION> in 'pride make'"))
 	}
-	contentType, err := contentTypeNew(argContentType)
+	makeType, err := makeTypeNew(argMakeType)
 	if err != nil {
 		return cmd, SysErrNew(SysErrCodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
 	}
 	cmd.Flag = flag
-	cmd.ArgContentType = argContentType
-	cmd.ContentType = contentType
+	cmd.ArgMakeType = argMakeType
+	cmd.MakeType = makeType
 	argDestination, err := GetArg(3)
 	if err != nil {
 		return cmd, SysErrNew(SysErrCodeHelp, fmt.Errorf("missing <DESTINATION> in 'pride make'"))
 	}
 	cmd.ArgDestination = argDestination
+	if strings.HasPrefix(cmd.ArgDestination, "./") {
+		cmd.ArgDestination = strings.Replace(cmd.ArgDestination, "./", "/", 1)
+	}
+	if !strings.HasPrefix(cmd.ArgDestination, "/") {
+		cmd.ArgDestination = "./" + cmd.ArgDestination
+	}
+	cmd.ArgDestinationStripped = strings.Replace(cmd.ArgDestination, "./", "", 1)
 	return cmd, nil
 }
 
@@ -39,9 +46,19 @@ func (cmd CmdMake) GetFlag() CmdFlag {
 }
 
 func (cmd CmdMake) Exec() SysErr {
-	switch cmd.ContentType {
-	case contentTypeSite:
+	switch cmd.MakeType {
+	case makeTypeSite:
 		op, err := OpNew(OpCodeMakeSite, cmd)
+		if err != nil {
+			return err
+		}
+		err = op.Run(cmd)
+		if err != nil {
+			return err
+		}
+		return nil
+	case makeTypeContent:
+		op, err := OpNew(OpCodeMakeContent, cmd)
 		if err != nil {
 			return err
 		}
@@ -55,30 +72,20 @@ func (cmd CmdMake) Exec() SysErr {
 	}
 }
 
-type contentType int
+type makeType int
 
 const (
-	contentTypeSite contentType = iota
+	makeTypeSite makeType = iota
+	makeTypeContent
 )
 
-func contentTypeNew(contentType string) (contentType, error) {
-	switch contentType {
+func makeTypeNew(makeType string) (makeType, error) {
+	switch makeType {
 	case "site":
-		return contentTypeSite, nil
+		return makeTypeSite, nil
+	case "content":
+		return makeTypeContent, nil
 	default:
 		return 0, fmt.Errorf("invalid content type provided")
 	}
-}
-
-func makeSite(dest string) SysErr {
-	fmt.Printf("making new site in %s..\n", dest)
-	err := os.Mkdir(dest, 0755)
-	if err != nil {
-		if strings.Contains(err.Error(), "file exists") {
-			return SysErrNew(SysErrCodeHelp, fmt.Errorf("<DESTINATION> %s already exists, please provide a new name or delete %s", dest, dest))
-		}
-		return SysErrNew(SysErrCodeHelp, fmt.Errorf("<DESTINATION> unspecified error when creating %s, are you using a valid directory name for your site?", dest))
-
-	}
-	return nil
 }

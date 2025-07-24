@@ -23,10 +23,12 @@ func (err ErrHelp) GetCode() ErrCode {
 	return err.code
 }
 
+func (err ErrHelp) GetMessage() string {
+	return err.message
+}
+
 func (err ErrHelp) Handle() {
-	PrintHelpScreen()
-	fmt.Print("\n")
-	fmt.Println("ops! we encountered an error while running pride, here is the error:")
+	fmt.Println("ops! error encountered, run 'pride help' for more info:")
 	color.Red(err.message)
 	os.Exit(1)
 }

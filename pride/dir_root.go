@@ -35,7 +35,6 @@ func DirRootNew(path string) DirRoot {
 }
 
 func (dir DirRoot) Create() SysErr {
-	fmt.Printf("making new site in %s..\n", dir.PathRoot)
 	err := os.Mkdir(dir.PathRoot, 0755)
 	if err != nil {
 		if strings.Contains(err.Error(), "file exists") {

@@ -14,6 +14,7 @@ func (op *OpMakeSite) Run(cmd Cmd) SysErr {
 	if !ok {
 		return SysErrNew(SysErrCodeDev, fmt.Errorf("type assertion failure"))
 	}
+	fmt.Printf("🧬 making new site at %s\n", cmdMake.ArgDestination)
 	dir := DirRootNew(cmdMake.ArgDestination)
 	err := dir.Create()
 	if err != nil {

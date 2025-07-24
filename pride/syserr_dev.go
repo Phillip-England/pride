@@ -23,6 +23,10 @@ func (err ErrDev) GetCode() ErrCode {
 	return err.code
 }
 
+func (err ErrDev) GetMessage() string {
+	return err.message
+}
+
 func (err ErrDev) Handle() {
 	fmt.Println("this error occurred because of a developer mistake:")
 	color.Red(err.message)

@@ -27,6 +27,7 @@ func PrintHelpScreen() {
 	fmt.Println(`🐍 pride - simple static sites
 
 [make]
-pride make <CONTENT-TYPE> <DESTINATION>
-pride make site ./new-site (scaffolds a new pride project in <DESTINATION>)`)
+pride make <CONTENT_TYPE> <DESTINATION>
+pride make site new-site (scaffolds a new pride project)
+pride make content /index.md (generate new content for your site)`)
 }
