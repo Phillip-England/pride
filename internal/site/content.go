@@ -38,11 +38,11 @@ func ContentNew(path string, isDraft bool) Content {
 		draftStr = "false"
 	}
 	f.Text = fmt.Sprintf(`+++
-title: "Home Page"
-dob: "%s"
-draft: "%s"
-template: "/default_template.html"
-nav: "default"
+title = "Home Page"
+dob = "%s"
+draft = "%s"
+template = "/default_template.html"
+nav = "default"
 +++
 
 # Welcome
@@ -150,7 +150,7 @@ func MarkdownFileNew(path string, theme string) (MarkdownFile, syserr.SysErr) {
 	mdFile.Meta = doc.Meta()
 	title, ok := mdFile.Meta["title"].(string)
 	if !ok {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'title' missing in %s, please add the following line to the file: 'title="%s"'`, path, time.Now().UTC().Format(time.RFC3339)))
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'title' missing in %s, please add the following line to the file: 'title="some title"'`, path))
 	}
 	mdFile.Title = title
 	dob, ok := mdFile.Meta["dob"].(string)
@@ -170,6 +170,7 @@ func MarkdownFileNew(path string, theme string) (MarkdownFile, syserr.SysErr) {
 	if !ok {
 		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' missing in %s, please add a line like this which points to a valid template: 'template = "default_template.html"'`, path))
 	}
+	template = "./templates" + template
 	_, err = os.Stat(template)
 	if err != nil {
 		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
