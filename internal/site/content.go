@@ -24,7 +24,7 @@ title: "Home Page"
 dob: "%s"
 draft: "true"
 template: "/default_template.html"
-nav: "main"
+nav: "default"
 ---
 
 # Welcome

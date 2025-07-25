@@ -18,7 +18,7 @@ type NewContent struct {
 func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
 	cmdMake, ok := c.(*cmd.New)
 	if !ok {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure"))
+		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure, did you use pointers correctly? did you return a valid op code?"))
 	}
 	contentPath := "./content/" + cmdMake.ArgDestinationStripped
 	fmt.Printf("🧬 making new content at %s\n", contentPath)

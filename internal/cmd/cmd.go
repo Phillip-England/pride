@@ -11,7 +11,8 @@ type Flag int
 
 const (
 	FlagHelp Flag = iota
-	FlagMake
+	FlagNewNew
+	FlagBuild
 )
 
 func (flag Flag) String() string {
@@ -19,7 +20,9 @@ func (flag Flag) String() string {
 	case 0:
 		return "FLAGHELP"
 	case 1:
-		return "FLAGMAKE"
+		return "FLAGNEW"
+	case 2:
+		return "FLAGBUILD"
 	default:
 		return "FLAGHELP"
 	}
@@ -33,7 +36,9 @@ func FlagNew() Flag {
 	firstArg := args[1]
 	switch firstArg {
 	case "new":
-		return FlagMake
+		return FlagNewNew
+	case "build":
+		return FlagBuild
 	default:
 		return FlagHelp
 	}
@@ -47,8 +52,14 @@ type Cmd interface {
 func CmdNew() (Cmd, syserr.SysErr) {
 	flag := FlagNew()
 	switch flag {
-	case FlagMake:
+	case FlagNewNew:
 		cmd, err := NewNew(flag)
+		if err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	case FlagBuild:
+		cmd, err := BuildNew(flag)
 		if err != nil {
 			return nil, err
 		}
