@@ -19,18 +19,18 @@ func NewNew(flag Flag) (*New, syserr.SysErr) {
 	cmd := &New{}
 	argMakeType, err := GetArg(2)
 	if err != nil {
-		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <CONTENT_TYPE> and <DESTINATION> in 'pride make'"))
+		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <CONTENT_TYPE> and <DESTINATION> in 'pride new'"))
 	}
 	makeType, err := makeTypeNew(argMakeType)
 	if err != nil {
-		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
+		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride new'"))
 	}
 	cmd.Flag = flag
 	cmd.ArgMakeType = argMakeType
 	cmd.MakeType = makeType
 	argDestination, err := GetArg(3)
 	if err != nil {
-		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <DESTINATION> in 'pride make'"))
+		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <DESTINATION> in 'pride new'"))
 	}
 	cmd.ArgDestination = argDestination
 	if strings.HasPrefix(cmd.ArgDestination, "./") {
@@ -47,30 +47,14 @@ func (cmd New) GetFlag() Flag {
 	return cmd.Flag
 }
 
-func (cmd New) Exec() syserr.SysErr {
+func (cmd New) GetOpCode() (int, syserr.SysErr) {
 	switch cmd.MakeType {
 	case makeTypeSite:
-		op, err := OpNew(CodeMakeSite, cmd)
-		if err != nil {
-			return err
-		}
-		err = op.Run(cmd)
-		if err != nil {
-			return err
-		}
-		return nil
+		return 1, nil
 	case makeTypeContent:
-		op, err := OpNew(CodeMakeContent, cmd)
-		if err != nil {
-			return err
-		}
-		err = op.Run(cmd)
-		if err != nil {
-			return err
-		}
-		return nil
+		return 2, nil
 	default:
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride make'"))
+		return -1, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride new'"))
 	}
 }
 

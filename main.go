@@ -2,15 +2,26 @@ package main
 
 import (
 	"github.com/Phillip-England/pride/internal/cmd"
+	"github.com/Phillip-England/pride/internal/op"
 )
 
 func main() {
-	cmd, err := cmd.NewCmd()
+	command, err := cmd.CmdNew()
 	if err != nil {
 		err.Handle()
 		return
 	}
-	err = cmd.Exec()
+	code, err := command.GetOpCode()
+	if err != nil {
+		err.Handle()
+		return
+	}
+	operation, err := op.OpNew(code)
+	if err != nil {
+		err.Handle()
+		return
+	}
+	err = operation.Exec(command)
 	if err != nil {
 		err.Handle()
 		return

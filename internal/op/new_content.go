@@ -1,21 +1,22 @@
-package cmd
+package op
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/Phillip-England/pride/internal/cmd"
 	"github.com/Phillip-England/pride/internal/site"
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type MakeContent struct {
-	Code Code
-	Cmd  Cmd
+type NewContent struct {
+	Code int
+	Cmd  cmd.Cmd
 }
 
-func (op *MakeContent) Run(c Cmd) syserr.SysErr {
-	cmdMake, ok := c.(New)
+func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
+	cmdMake, ok := c.(*cmd.New)
 	if !ok {
 		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure"))
 	}
