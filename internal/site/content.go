@@ -37,13 +37,13 @@ func ContentNew(path string, isDraft bool) Content {
 	} else {
 		draftStr = "false"
 	}
-	f.Text = fmt.Sprintf(`---
+	f.Text = fmt.Sprintf(`+++
 title: "Home Page"
 dob: "%s"
 draft: "%s"
 template: "/default_template.html"
 nav: "default"
----
++++
 
 # Welcome
 This is the home page!
@@ -98,6 +98,10 @@ type MarkdownFile struct {
 	Meta            map[string]any
 	FileName        string
 	PathWithoutBase string
+	Title           string
+	Dob             string
+	Draft           string
+	Template        string
 }
 
 func MarkdownFileNew(path string, theme string) (MarkdownFile, syserr.SysErr) {
@@ -144,6 +148,33 @@ func MarkdownFileNew(path string, theme string) (MarkdownFile, syserr.SysErr) {
 	root := md.Parser().Parse(text.NewReader(mdBytes))
 	doc := root.OwnerDocument()
 	mdFile.Meta = doc.Meta()
+	title, ok := mdFile.Meta["title"].(string)
+	if !ok {
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'title' missing in %s, please add the following line to the file: 'title="%s"'`, path, time.Now().UTC().Format(time.RFC3339)))
+	}
+	mdFile.Title = title
+	dob, ok := mdFile.Meta["dob"].(string)
+	if !ok {
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'dob' missing in %s, please add the following line to the file: 'dob="%s"'`, path, time.Now().UTC().Format(time.RFC3339)))
+	}
+	mdFile.Dob = dob
+	draft, ok := mdFile.Meta["draft"].(string)
+	if !ok {
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'draft' missing in %s, please add the following line to the file: 'draft = "true"'`, path))
+	}
+	if draft != "true" && draft != "false" {
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`invalid 'draft' value in %s, please change the value to either 'true' or 'false'`, path))
+	}
+	mdFile.Draft = draft
+	template, ok := mdFile.Meta["template"].(string)
+	if !ok {
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' missing in %s, please add a line like this which points to a valid template: 'template = "default_template.html"'`, path))
+	}
+	_, err = os.Stat(template)
+	if err != nil {
+		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
+	}
+	mdFile.Template = template
 	return mdFile, nil
 }
 
