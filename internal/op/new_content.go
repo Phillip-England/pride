@@ -34,7 +34,7 @@ func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
 	if err != nil {
 		return syserr.New(syserr.CodeDev, fmt.Errorf("could not load information on %s after it has been confirmed to exist", contentDirPath))
 	}
-	f := site.ContentNew(contentPath)
+	f := site.ContentNew(contentPath, true)
 	serr = f.Create()
 	if serr != nil {
 		if strings.Contains(serr.GetMessage(), "file exists") {

@@ -7,6 +7,7 @@ const (
 	CodeDefault
 	CodeDev
 	CodeMia
+	CodeLib
 )
 
 type SysErr interface {
@@ -23,6 +24,8 @@ func New(code ErrCode, err error) SysErr {
 		return DevNew(code, err)
 	case CodeMia:
 		return MiaNew(code, err)
+	case CodeLib:
+		return LibNew(code, err)
 	default:
 		return DefaultNew(code, err)
 	}

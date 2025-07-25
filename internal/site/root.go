@@ -14,6 +14,7 @@ type Root struct {
 	PathConfig       string
 	PathStatic       string
 	PathTemplates    string
+	PathGenerated    string
 	PathLayouts      string
 	PathLayoutBase   string
 	PathTemplateBase string
@@ -27,6 +28,7 @@ func RootNew(path string) Root {
 	dir.PathContent = path + "/content"
 	dir.PathStatic = path + "/static"
 	dir.PathTemplates = path + "/templates"
+	dir.PathGenerated = path + "/generated"
 	dir.PathLayouts = path + "/layouts"
 	dir.PathConfig = path + "/pride.toml"
 	dir.PathLayoutBase = dir.PathLayouts + "/default_layout.html"
@@ -50,6 +52,7 @@ func (dir Root) Create() syserr.SysErr {
 		dir.PathStatic,
 		dir.PathLayouts,
 		dir.PathTemplates,
+		dir.PathGenerated,
 	}
 	for _, dir := range dirsToMake {
 		err = os.Mkdir(dir, 0755)
@@ -77,7 +80,7 @@ func (dir Root) Create() syserr.SysErr {
 	if syserr != nil {
 		return syserr
 	}
-	md := ContentNew(dir.PathContentBase)
+	md := ContentNew(dir.PathContentBase, false)
 	syserr = md.Create()
 	if syserr != nil {
 		return syserr

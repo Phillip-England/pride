@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Phillip-England/pride/internal/cmd"
+	"github.com/Phillip-England/pride/internal/site"
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
@@ -17,6 +18,10 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure, did you use pointers correctly? did you return a valid op code?"))
 	}
 	fmt.Printf("🧬 building site navigation\n")
-
+	mdFiles, serr := site.ContentLoad()
+	if serr != nil {
+		return serr
+	}
+	fmt.Println(mdFiles)
 	return nil
 }

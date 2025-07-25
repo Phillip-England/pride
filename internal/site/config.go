@@ -15,6 +15,7 @@ type Config struct {
 	Dob     string
 	Version string
 	Server  string
+	Theme   string
 }
 
 func ConfigNew(path string) Config {
@@ -23,6 +24,7 @@ func ConfigNew(path string) Config {
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
+	config.Theme = "dracula"
 	config.Text = fmt.Sprintf(`version = "%s"
 dob = "%s"
 server = "%s"`, config.Version, config.Dob, config.Server)
