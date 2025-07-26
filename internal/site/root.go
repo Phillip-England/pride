@@ -80,7 +80,7 @@ func (dir Root) Create() syserr.SysErr {
 	if syserr != nil {
 		return syserr
 	}
-	md := ContentNew(dir.PathContentBase, false)
+	md := ContentNew(dir.PathContentBase, "Home Page", false)
 	syserr = md.Create()
 	if syserr != nil {
 		return syserr

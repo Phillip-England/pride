@@ -12,7 +12,7 @@ type New struct {
 	ArgMakeType            string
 	ArgDestination         string
 	ArgDestinationStripped string
-	MakeType               makeType
+	ContentType            contentType
 }
 
 func NewNew(flag Flag) (*New, syserr.SysErr) {
@@ -21,13 +21,13 @@ func NewNew(flag Flag) (*New, syserr.SysErr) {
 	if err != nil {
 		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <CONTENT_TYPE> and <DESTINATION> in 'pride new'"))
 	}
-	makeType, err := makeTypeNew(argMakeType)
+	contentType, err := contentTypeNew(argMakeType)
 	if err != nil {
 		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride new'"))
 	}
 	cmd.Flag = flag
 	cmd.ArgMakeType = argMakeType
-	cmd.MakeType = makeType
+	cmd.ContentType = contentType
 	argDestination, err := GetArg(3)
 	if err != nil {
 		return cmd, syserr.New(syserr.CodeHelp, fmt.Errorf("missing <DESTINATION> in 'pride new'"))
@@ -48,29 +48,29 @@ func (cmd New) GetFlag() Flag {
 }
 
 func (cmd New) GetOpCode() (int, syserr.SysErr) {
-	switch cmd.MakeType {
-	case makeTypeSite:
+	switch cmd.ContentType {
+	case contentTypeSite:
 		return 1, nil
-	case makeTypeContent:
+	case contentTypeContent:
 		return 2, nil
 	default:
 		return -1, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride new'"))
 	}
 }
 
-type makeType int
+type contentType int
 
 const (
-	makeTypeSite makeType = iota
-	makeTypeContent
+	contentTypeSite contentType = iota
+	contentTypeContent
 )
 
-func makeTypeNew(makeType string) (makeType, error) {
-	switch makeType {
+func contentTypeNew(contentType string) (contentType, error) {
+	switch contentType {
 	case "site":
-		return makeTypeSite, nil
+		return contentTypeSite, nil
 	case "content":
-		return makeTypeContent, nil
+		return contentTypeContent, nil
 	default:
 		return 0, fmt.Errorf("invalid content type provided")
 	}

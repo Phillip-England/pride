@@ -24,10 +24,12 @@ type Content struct {
 	Text    string
 	Dob     string
 	IsDraft bool
+	Title   string
 }
 
-func ContentNew(path string, isDraft bool) Content {
+func ContentNew(path string, title string, isDraft bool) Content {
 	var f Content
+	f.Title = title
 	f.Path = path
 	f.Dob = time.Now().UTC().Format(time.RFC3339)
 	f.IsDraft = isDraft
@@ -38,7 +40,7 @@ func ContentNew(path string, isDraft bool) Content {
 		draftStr = "false"
 	}
 	f.Text = fmt.Sprintf(`+++
-title = "Home Page"
+title = "%s"
 dob = "%s"
 draft = "%s"
 template = "/default_template.html"
@@ -47,7 +49,7 @@ nav = "default"
 
 # Welcome
 This is the home page!
-`, f.Dob, draftStr)
+`, f.Title, f.Dob, draftStr)
 	return f
 }
 
@@ -92,6 +94,7 @@ func GetContentPaths() ([]string, syserr.SysErr) {
 
 type MarkdownFile struct {
 	Path            string
+	ServerPath      string
 	Text            string
 	Theme           string
 	Html            string
@@ -104,7 +107,7 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func MarkdownFileNew(path string, theme string) (MarkdownFile, syserr.SysErr) {
+func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFile, syserr.SysErr) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
@@ -176,6 +179,12 @@ func MarkdownFileNew(path string, theme string) (MarkdownFile, syserr.SysErr) {
 		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
 	}
 	mdFile.Template = template
+	serverPath := strings.TrimPrefix(mdFile.Path, serverPrefix)
+	serverPath = strings.TrimSuffix(serverPath, ".md")
+	if serverPath == "/index" {
+		serverPath = "/"
+	}
+	mdFile.ServerPath = serverPath
 	return mdFile, nil
 }
 
@@ -190,11 +199,16 @@ func ContentLoad() ([]MarkdownFile, syserr.SysErr) {
 		return content, serr
 	}
 	for _, path := range paths {
-		mdFile, serr := MarkdownFileNew(path, config.Theme)
+		mdFile, serr := MarkdownFileNew(path, "content", config.Theme)
 		if serr != nil {
 			return content, serr
 		}
 		content = append(content, mdFile)
 	}
 	return content, nil
+}
+
+type ContentDir struct {
+	Path    string
+	MdFiles []MarkdownFile
 }
