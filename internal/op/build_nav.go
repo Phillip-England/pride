@@ -40,10 +40,23 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 
 	navs := []string{}
 	for _, dir := range navDirs {
-		nav, serr := makeNav("<nav>", dir, config.Theme)
-		if serr != nil {
-			return serr
+		nav := fmt.Sprintf("<nav src='%s'><ul>", dir)
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return syserr.New(syserr.CodeDev, fmt.Errorf("failed to read dir %s for nav generation", dir))
 		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			path := filepath.Join(dir, entry.Name())
+			mdFile, err := site.MarkdownFileNew(path, "content", config.Theme)
+			if err != nil {
+				return err
+			}
+			nav += fmt.Sprintf("<li><a href='%s'>%s</a></li>", mdFile.ServerPath, mdFile.Title)
+		}
+		nav += "</ul></nav>"
 		navs = append(navs, nav)
 	}
 
@@ -53,12 +66,4 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 	}
 
 	return nil
-}
-
-func makeNav(nav string, dir string, theme string) (string, syserr.SysErr) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return syserr.New(syserr.CodeDev, "when generating navigation, ")
-	}
-	return nav, nil
 }
