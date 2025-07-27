@@ -12,6 +12,8 @@ test-init-mock-content:
 	pride new content posts/angular_and_react; \
 	pride new content articles/do_you_dev; \
 	pride new content articles/burnout_or_hungry; \
+	pride new content posts/archive/old.md; \
+	pride new content posts/archive/older.md; \
 
 test-build-nav:
 	cd ./tmp/test-site; \

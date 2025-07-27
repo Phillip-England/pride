@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Phillip-England/pride/internal/cmd"
 	"github.com/Phillip-England/pride/internal/site"
@@ -81,7 +82,7 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 		navName = strings.Replace(navName, ".-", "", 1)
 	}
 	if isFirstPass {
-		nav = "<nav class='pride-nav' nav-name='default'><ul>"
+		nav = "<nav id='pride-nav-root' class='pride-nav' nav-name='default'><ul>"
 	} else {
 		nav = fmt.Sprintf(`<li class='pride-inner-nav' nav-name='%s'>%s<ul>`, navName, navName)
 	}
@@ -89,6 +90,7 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 	if err != nil {
 		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to read %s while generating site navigation", root))
 	}
+	mdFiles := []site.MarkdownFile{}
 	for _, entry := range entries {
 		if entry.IsDir() {
 			innerNav, serr := build(filepath.Join(root, entry.Name()), config, false)
@@ -101,22 +103,36 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 			if serr != nil {
 				return "", serr
 			}
-			nav += fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
-		}
+			// navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
+			// nav += navItem
+			if len(mdFiles) == 0 {
+				mdFiles = append(mdFiles, mdFile)
+				continue
+			}
+			prevMdFile := mdFiles[len(mdFiles)-1]
+			prevDob, err := time.Parse(time.RFC3339, prevMdFile.Dob)
+			if err != nil {
+				return "", syserr.DevNew(fmt.Errorf("failed to parse time from nav link during nav generation\n%s", err.Error()))
+			}
+			currentDob, err := time.Parse(time.RFC3339, mdFile.Dob)
+			if err != nil {
+				return "", syserr.DevNew(fmt.Errorf("failed to parse time from nav link during nav generation\n%s", err.Error()))
+			}
+			if prevDob.Before(currentDob) {
+				mdFiles = append(mdFiles, mdFile)
+			} else {
+				mdFiles = append([]site.MarkdownFile{mdFile}, mdFiles...)
+			}
+ 		}
+	}
+	for _, mdFile := range mdFiles {
+		navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
+		nav += navItem
 	}
 	if isFirstPass {
 		nav += "</nav></ul>"
 	} else {
 		nav += "</ul></li>"
 	}
-	nav, serr := sortNav(nav)
-	if serr != nil {
-		return "", serr
-	}
-	return nav, nil
-}
-
-func sortNav(nav string) (string, syserr.SysErr) {
-	// sort the nav, buddy ;)
 	return nav, nil
 }
