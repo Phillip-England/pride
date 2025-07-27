@@ -19,13 +19,13 @@ type SysErr interface {
 func New(code ErrCode, err error) SysErr {
 	switch code {
 	case CodeHelp:
-		return HelpNew(code, err)
+		return HelpNew(err)
 	case CodeDev:
-		return DevNew(code, err)
+		return DevNew(err)
 	case CodeMia:
-		return MiaNew(code, err)
+		return MiaNew(err)
 	case CodeLib:
-		return LibNew(code, err)
+		return LibNew(err)
 	default:
 		return DefaultNew(code, err)
 	}

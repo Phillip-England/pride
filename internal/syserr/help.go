@@ -12,10 +12,10 @@ type Help struct {
 	code    ErrCode
 }
 
-func HelpNew(code ErrCode, err error) Help {
+func HelpNew(err error) Help {
 	return Help{
 		message: err.Error(),
-		code:    code,
+		code:    CodeHelp,
 	}
 }
 

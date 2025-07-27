@@ -12,10 +12,10 @@ type Mia struct {
 	code    ErrCode
 }
 
-func MiaNew(code ErrCode, err error) Mia {
+func MiaNew(err error) Mia {
 	return Mia{
 		message: err.Error(),
-		code:    code,
+		code:    CodeMia,
 	}
 }
 

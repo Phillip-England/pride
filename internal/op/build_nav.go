@@ -21,18 +21,26 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 	if !ok {
 		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure, did you use pointers correctly? did you return a valid op code?"))
 	}
+	_, serr := BuildNavigation()
+	if serr != nil {
+		return serr
+	}
+	return nil
+}
+
+func BuildNavigation() (string, syserr.SysErr) {
 	fmt.Printf("🧬 building site navigation\n")
 	config, serr := site.ConfigLoadFromCwd()
 	if serr != nil {
-		return serr
+		return "", serr
 	}
-	nav, serr := buildNav("./content", config.Theme, true)
+	nav, serr := build("./content", config, true)
 	if serr != nil {
-		return serr
+		return "", serr
 	}
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(nav))
 	if err != nil {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("goquery failed to load generated navigation\nhere is their provided error: %s", err.Error()))
+		return "", syserr.New(syserr.CodeLib, fmt.Errorf("goquery failed to load generated navigation: %s", err.Error()))
 	}
 	var potErr syserr.SysErr
 	potErr = nil
@@ -46,35 +54,36 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 		navName, _ := s.Attr("nav-name")
 		s = s.RemoveAttr("nav-name")
 		s = s.RemoveClass("pride-inner-nav")
-		innerNav := fmt.Sprintf("<nav nav-name='%s'>%s</nav>", navName, outerHtml)
+		innerNav := fmt.Sprintf("<nav class='pride-nav' nav-name='%s'>%s</nav>", navName, outerHtml)
 		filePath := "./navigation/" + navName + ".html"
 		err = os.WriteFile(filePath, []byte(innerNav), 0755)
 		if err != nil {
-			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s", filePath))
+			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", filePath, err.Error()))
 		}
 		
 	})
 	if potErr != nil {
-		return potErr
+		return "", potErr
 	}
 	err = os.WriteFile("./navigation/default.html", []byte(nav), 0755)
 	if err != nil {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s", "./navigation/default.html"))
+		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", "./navigation/default.html", err.Error()))
 	}
-	return nil
+	return nav, nil
 }
 
-func buildNav(root string, theme string, isFirstPass bool) (string, syserr.SysErr) {
+
+func build(root string, config site.Config, isFirstPass bool) (string, syserr.SysErr) {
 	var nav string
-	base := filepath.Base(root)
 	navName := strings.ReplaceAll(root, "/", "-")
+	navName = strings.Replace(navName, "content-", "", 1)
 	if strings.HasPrefix(navName, ".-") {
 		navName = strings.Replace(navName, ".-", "", 1)
 	}
 	if isFirstPass {
-		nav = fmt.Sprintf("<nav class='pride-nav' content-dir='%s' nav-name='default'><ul>", root)
+		nav = "<nav class='pride-nav' nav-name='default'><ul>"
 	} else {
-		nav = fmt.Sprintf(`<li class='pride-inner-nav' content-dir='%s' nav-name='%s'>%s<ul>`, root, base, navName)
+		nav = fmt.Sprintf(`<li class='pride-inner-nav' nav-name='%s'>%s<ul>`, navName, navName)
 	}
 	entries, err := os.ReadDir(root)
 	if err != nil {
@@ -82,17 +91,17 @@ func buildNav(root string, theme string, isFirstPass bool) (string, syserr.SysEr
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
-			innerNav, serr := buildNav(filepath.Join(root, entry.Name()), theme, false)
+			innerNav, serr := build(filepath.Join(root, entry.Name()), config, false)
 			if serr != nil {
 				return "", serr
 			}
 			nav += innerNav
 		} else {
-			mdFile, serr := site.MarkdownFileNew(filepath.Join(root, entry.Name()), "config", theme)
+			mdFile, serr := site.MarkdownFileNew(filepath.Join(root, entry.Name()), "content", config.Theme)
 			if serr != nil {
 				return "", serr
 			}
-			nav += fmt.Sprintf(`<li><a href="%s">%s</a></li>`, mdFile.ServerPath, mdFile.Title)
+			nav += fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
 		}
 	}
 	if isFirstPass {
@@ -100,5 +109,14 @@ func buildNav(root string, theme string, isFirstPass bool) (string, syserr.SysEr
 	} else {
 		nav += "</ul></li>"
 	}
+	nav, serr := sortNav(nav)
+	if serr != nil {
+		return "", serr
+	}
+	return nav, nil
+}
+
+func sortNav(nav string) (string, syserr.SysErr) {
+	// sort the nav, buddy ;)
 	return nav, nil
 }

@@ -12,10 +12,10 @@ type Dev struct {
 	code    ErrCode
 }
 
-func DevNew(code ErrCode, err error) Dev {
+func DevNew(err error) Dev {
 	return Dev{
 		message: err.Error(),
-		code:    code,
+		code:    CodeDev,
 	}
 }
 

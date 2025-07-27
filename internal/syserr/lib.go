@@ -12,10 +12,10 @@ type Lib struct {
 	code    ErrCode
 }
 
-func LibNew(code ErrCode, err error) Lib {
+func LibNew(err error) Lib {
 	return Lib{
 		message: err.Error(),
-		code:    code,
+		code:    CodeLib,
 	}
 }
 
