@@ -43,8 +43,7 @@ func ContentNew(path string, title string, isDraft bool) Content {
 title = "%s"
 dob = "%s"
 draft = "%s"
-template = "/default_template.html"
-nav = "default"
+template = "/default.html"
 +++
 
 # Welcome
@@ -183,6 +182,9 @@ func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFi
 	serverPath = strings.TrimSuffix(serverPath, ".md")
 	if serverPath == "/index" {
 		serverPath = "/"
+	}
+	if !strings.HasPrefix(serverPath, "/") {
+		serverPath = "/" + serverPath
 	}
 	mdFile.ServerPath = serverPath
 	return mdFile, nil

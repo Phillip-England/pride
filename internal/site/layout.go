@@ -20,7 +20,7 @@ func LayoutNew(path string) Layout {
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="/static/default_styles.css">
+		<link rel="stylesheet" href="/static/default.css">
 		<title>{{ .Pride.Ctx.Title }}</title>
 	</head>
   	<body>
