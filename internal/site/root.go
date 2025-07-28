@@ -14,7 +14,7 @@ type Root struct {
 	PathConfig       string
 	PathStatic       string
 	PathTemplates    string
-	PathNavigation    string
+	PathNavigation   string
 	PathLayouts      string
 	PathLayoutBase   string
 	PathTemplateBase string
@@ -80,7 +80,7 @@ func (dir Root) Create() syserr.SysErr {
 	if syserr != nil {
 		return syserr
 	}
-	md := ContentNew(dir.PathContentBase, "Home Page", false)
+	md := ContentNew(dir.PathContentBase, "Home Page", false, 0)
 	syserr = md.Create()
 	if syserr != nil {
 		return syserr

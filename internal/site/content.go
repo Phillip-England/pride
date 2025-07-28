@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 )
 
 type Content struct {
+	Id      int
 	Path    string
 	Text    string
 	Dob     string
@@ -27,13 +29,15 @@ type Content struct {
 	Title   string
 }
 
-func ContentNew(path string, title string, isDraft bool) Content {
+func ContentNew(path string, title string, isDraft bool, id int) Content {
 	var f Content
+	f.Id = id
 	f.Title = title
 	f.Path = path
 	f.Dob = time.Now().UTC().Format(time.RFC3339)
 	f.IsDraft = isDraft
 	f.Text = fmt.Sprintf(`+++
+id = %d
 title = "%s"
 dob = "%s"
 draft = %t
@@ -42,7 +46,7 @@ template = "./templates/default.html"
 
 # Welcome
 This is the home page!
-`, f.Title, f.Dob, f.IsDraft)
+`, f.Id, f.Title, f.Dob, f.IsDraft)
 	return f
 }
 
@@ -66,7 +70,6 @@ func (f Content) Create() syserr.SysErr {
 
 func GetContentPaths() ([]string, syserr.SysErr) {
 	paths := []string{}
-
 	potentialErrCode := 0
 	err := filepath.WalkDir("./content", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
@@ -82,6 +85,7 @@ func GetContentPaths() ([]string, syserr.SysErr) {
 	if err != nil {
 		return paths, syserr.New(syserr.ErrCode(potentialErrCode), err)
 	}
+	sort.Strings(paths)
 	return paths, nil
 }
 
@@ -101,7 +105,7 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFile, syserr.SysErr) {
+func MarkdownFileNew(path string, serverPrefix string, theme string, id int) (MarkdownFile, syserr.SysErr) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
@@ -110,6 +114,7 @@ func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFi
 	mdFile.Text = string(mdBytes)
 	mdFile.Path = path
 	mdFile.Theme = theme
+	mdFile.Id = id
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			highlighting.NewHighlighting(
@@ -185,7 +190,6 @@ func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFi
 		serverPath = "/" + serverPath
 	}
 	mdFile.ServerPath = serverPath
-	mdFile.Id = id
 	return mdFile, nil
 }
 
@@ -199,8 +203,8 @@ func ContentLoad() ([]MarkdownFile, syserr.SysErr) {
 	if serr != nil {
 		return content, serr
 	}
-	for _, path := range paths {
-		mdFile, serr := MarkdownFileNew(path, "content", config.Theme)
+	for i, path := range paths {
+		mdFile, serr := MarkdownFileNew(path, "content", config.Theme, i)
 		if serr != nil {
 			return content, serr
 		}

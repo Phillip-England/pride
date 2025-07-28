@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -98,7 +99,7 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 			}
 			nav += innerNav
 		} else {
-			mdFile, serr := site.MarkdownFileNew(filepath.Join(root, entry.Name()), "content", config.Theme)
+			mdFile, serr := site.MarkdownFileNew(filepath.Join(root, entry.Name()), "content", config.Theme, 0)
 			if serr != nil {
 				return "", serr
 			}
@@ -130,7 +131,20 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 			}
 		}
 	}
+	mdFilePaths := []string{}
 	for _, mdFile := range mdFiles {
+		mdFilePaths = append(mdFilePaths, mdFile.Path)
+	}
+	sort.Strings(mdFilePaths)
+	mdFilesSorted := []site.MarkdownFile{}
+	for _, path := range mdFilePaths {
+		for _, mdFile := range mdFiles {
+			if mdFile.Path == path {
+				mdFilesSorted = append(mdFilesSorted, mdFile)
+			}
+		}
+	}
+	for _, mdFile := range mdFilesSorted {
 		navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
 		nav += navItem
 	}
