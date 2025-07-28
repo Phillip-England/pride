@@ -31,10 +31,10 @@ func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
 	contentDirPath := "./content"
 	info, err := os.Stat(contentDirPath)
 	if os.IsNotExist(err) || !info.IsDir() {
-		return syserr.New(syserr.CodeMia, fmt.Errorf("could not located %s directory", contentDirPath))
+		return syserr.MiaNew(fmt.Errorf("could not located %s directory", contentDirPath))
 	}
 	if err != nil {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("could not load information on %s after it has been confirmed to exist", contentDirPath))
+		return syserr.DevNew(fmt.Errorf("could not load information on %s after it has been confirmed to exist", contentDirPath))
 	}
 	fileName := filepath.Base(cmdMake.ArgDestination)
 	fileName = strings.TrimSuffix(fileName, ".md")
@@ -45,11 +45,17 @@ func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
 		parts[i] = string(runes)
 	}
 	title := strings.Join(parts, " ")
+
+	// mdFiles, serr := site.ContentLoad()
+	// if serr != nil {
+	// 	return serr
+	// }
+
 	f := site.ContentNew(contentPath+".md", title, true)
 	serr = f.Create()
 	if serr != nil {
 		if strings.Contains(serr.GetMessage(), "file exists") {
-			return syserr.New(syserr.CodeHelp, fmt.Errorf("%s already exists", contentPath))
+			return syserr.HelpNew(fmt.Errorf("%s already exists", contentPath))
 		}
 		return serr
 	}

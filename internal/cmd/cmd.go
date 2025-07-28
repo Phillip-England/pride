@@ -13,6 +13,7 @@ const (
 	FlagHelp Flag = iota
 	FlagNewNew
 	FlagBuild
+	FlagPublish
 )
 
 func (flag Flag) String() string {
@@ -23,6 +24,8 @@ func (flag Flag) String() string {
 		return "FLAGNEW"
 	case 2:
 		return "FLAGBUILD"
+	case 3:
+		return "FLAGPUBLISH"
 	default:
 		return "FLAGHELP"
 	}
@@ -39,6 +42,8 @@ func FlagNew() Flag {
 		return FlagNewNew
 	case "build":
 		return FlagBuild
+	case "publish":
+		return FlagPublish
 	default:
 		return FlagHelp
 	}
@@ -60,6 +65,12 @@ func CmdNew() (Cmd, syserr.SysErr) {
 		return cmd, nil
 	case FlagBuild:
 		cmd, err := BuildNew(flag)
+		if err != nil {
+			return nil, err
+		}
+		return cmd, nil
+	case FlagPublish:
+		cmd, err := PublishNew(flag)
 		if err != nil {
 			return nil, err
 		}

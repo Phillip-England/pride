@@ -49,7 +49,7 @@ func BuildNavigation() (string, syserr.SysErr) {
 		inner := s.Children().First()
 		outerHtml, err := goquery.OuterHtml(inner)
 		if err != nil {
-			potErr =  syserr.New(syserr.CodeDev, fmt.Errorf("goquery failed to parse the outerHTML of an inner navigation, here is their provided error: %s", err.Error()))
+			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("goquery failed to parse the outerHTML of an inner navigation, here is their provided error: %s", err.Error()))
 			return
 		}
 		navName, _ := s.Attr("nav-name")
@@ -61,7 +61,7 @@ func BuildNavigation() (string, syserr.SysErr) {
 		if err != nil {
 			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", filePath, err.Error()))
 		}
-		
+
 	})
 	if potErr != nil {
 		return "", potErr
@@ -72,7 +72,6 @@ func BuildNavigation() (string, syserr.SysErr) {
 	}
 	return nav, nil
 }
-
 
 func build(root string, config site.Config, isFirstPass bool) (string, syserr.SysErr) {
 	var nav string
@@ -106,7 +105,9 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 			// navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
 			// nav += navItem
 			if len(mdFiles) == 0 {
-				mdFiles = append(mdFiles, mdFile)
+				if !mdFile.IsDraft {
+					mdFiles = append(mdFiles, mdFile)
+				}
 				continue
 			}
 			prevMdFile := mdFiles[len(mdFiles)-1]
@@ -119,11 +120,15 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 				return "", syserr.DevNew(fmt.Errorf("failed to parse time from nav link during nav generation\n%s", err.Error()))
 			}
 			if prevDob.Before(currentDob) {
-				mdFiles = append(mdFiles, mdFile)
+				if !mdFile.IsDraft {
+					mdFiles = append(mdFiles, mdFile)
+				}
 			} else {
-				mdFiles = append([]site.MarkdownFile{mdFile}, mdFiles...)
+				if !mdFile.IsDraft {
+					mdFiles = append([]site.MarkdownFile{mdFile}, mdFiles...)
+				}
 			}
- 		}
+		}
 	}
 	for _, mdFile := range mdFiles {
 		navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)

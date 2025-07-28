@@ -33,22 +33,16 @@ func ContentNew(path string, title string, isDraft bool) Content {
 	f.Path = path
 	f.Dob = time.Now().UTC().Format(time.RFC3339)
 	f.IsDraft = isDraft
-	draftStr := ""
-	if isDraft {
-		draftStr = "true"
-	} else {
-		draftStr = "false"
-	}
 	f.Text = fmt.Sprintf(`+++
 title = "%s"
 dob = "%s"
-draft = "%s"
-template = "/default.html"
+draft = %t
+template = "./templates/default.html"
 +++
 
 # Welcome
 This is the home page!
-`, f.Title, f.Dob, draftStr)
+`, f.Title, f.Dob, f.IsDraft)
 	return f
 }
 
@@ -92,6 +86,7 @@ func GetContentPaths() ([]string, syserr.SysErr) {
 }
 
 type MarkdownFile struct {
+	Id              int
 	Path            string
 	ServerPath      string
 	Text            string
@@ -102,7 +97,7 @@ type MarkdownFile struct {
 	PathWithoutBase string
 	Title           string
 	Dob             string
-	Draft           string
+	IsDraft         bool
 	Template        string
 }
 
@@ -150,32 +145,35 @@ func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFi
 	root := md.Parser().Parse(text.NewReader(mdBytes))
 	doc := root.OwnerDocument()
 	mdFile.Meta = doc.Meta()
+	id, ok := mdFile.Meta["id"].(int)
+	if !ok {
+		id = 0
+	}
 	title, ok := mdFile.Meta["title"].(string)
 	if !ok {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'title' missing in %s, please add the following line to the file: 'title="some title"'`, path))
+		title = "Hello, World!"
 	}
 	mdFile.Title = title
 	dob, ok := mdFile.Meta["dob"].(string)
 	if !ok {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'dob' missing in %s, please add the following line to the file: 'dob="%s"'`, path, time.Now().UTC().Format(time.RFC3339)))
+		dob = time.Now().UTC().Format(time.RFC3339)
 	}
 	mdFile.Dob = dob
-	draft, ok := mdFile.Meta["draft"].(string)
+	draft, ok := mdFile.Meta["draft"].(bool)
 	if !ok {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'draft' missing in %s, please add the following line to the file: 'draft = "true"'`, path))
+		draft = true
 	}
-	if draft != "true" && draft != "false" {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`invalid 'draft' value in %s, please change the value to either 'true' or 'false'`, path))
-	}
-	mdFile.Draft = draft
+	mdFile.IsDraft = draft
 	template, ok := mdFile.Meta["template"].(string)
 	if !ok {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' missing in %s, please add a line like this which points to a valid template: 'template = "default_template.html"'`, path))
+		template = "default.html"
 	}
-	template = "./templates" + template
+	if !strings.HasPrefix(template, "./templates") {
+		return mdFile, syserr.HelpNew(fmt.Errorf(`frontmatter 'template' value in %s does not being with "./templates/", this frontmatter value must begin with "./templates/"`, path))
+	}
 	_, err = os.Stat(template)
 	if err != nil {
-		return mdFile, syserr.New(syserr.CodeHelp, fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
+		return mdFile, syserr.HelpNew(fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
 	}
 	mdFile.Template = template
 	serverPath := strings.TrimPrefix(mdFile.Path, serverPrefix)
@@ -187,6 +185,7 @@ func MarkdownFileNew(path string, serverPrefix string, theme string) (MarkdownFi
 		serverPath = "/" + serverPath
 	}
 	mdFile.ServerPath = serverPath
+	mdFile.Id = id
 	return mdFile, nil
 }
 
