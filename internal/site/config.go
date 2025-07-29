@@ -3,6 +3,8 @@ package site
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -10,17 +12,25 @@ import (
 )
 
 type Config struct {
-	Path    string
-	Text    string
-	Dob     string
-	Version string
-	Server  string
-	Theme   string
+	SiteName      string
+	Dir           string
+	Path          string
+	RelativePath  string
+	Text          string
+	Dob           string
+	Version       string
+	Server        string
+	Theme         string
+	ContentDir    string
+	TemplatesDir  string
+	NavigationDir string
 }
 
 func ConfigNew(path string) Config {
 	var config Config
 	config.Path = path
+	config.Dir = strings.TrimSuffix(path, "/pride.toml")
+	config.SiteName = filepath.Base(config.Dir)
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
@@ -47,6 +57,43 @@ func ConfigLoadFromCwd() (Config, syserr.SysErr) {
 	if _, err := toml.DecodeFile(config.Path, &config); err != nil {
 		return config, syserr.New(syserr.CodeDev, fmt.Errorf("failed to decode %s, at this point, the file has been verified as existing, so this is a developer error", config.Path))
 	}
+	return config, nil
+}
+
+func ConfigLoad() (Config, syserr.SysErr) {
+	var config Config
+	foundConfig := false
+	dir, err := os.Getwd()
+	if err != nil {
+		return config, syserr.DevNew(fmt.Errorf("failed to get a reference to the cwd becuase:\n%s", err.Error()))
+	}
+	for {
+		configPath := dir + "/pride.toml"
+		file, err := os.ReadFile(configPath)
+		if err != nil {
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+			continue
+		}
+		config.Text = string(file)
+		config.Path = configPath
+		if _, err := toml.DecodeFile(config.Path, &config); err != nil {
+			return config, syserr.New(syserr.CodeDev, fmt.Errorf("failed to decode %s, at this point, the file has been verified as existing, so this is a developer error", config.Path))
+		}
+		foundConfig = true
+		config.Dir = dir
+		config.SiteName = filepath.Base(config.Dir)
+		break
+	}
+	if !foundConfig {
+		return config, syserr.MiaNew(fmt.Errorf("failed to load pride.toml from current dir, or any of it's parent dirs"))
+	}
+	config.ContentDir = config.Dir + "/content"
+	config.TemplatesDir = config.Dir + "/templates"
+	config.NavigationDir = config.Dir + "/navigation"
 	return config, nil
 }
 

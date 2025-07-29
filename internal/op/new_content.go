@@ -45,13 +45,7 @@ func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
 		parts[i] = string(runes)
 	}
 	title := strings.Join(parts, " ")
-	mdFiles, serr := site.ContentLoad()
-	if serr != nil {
-		return serr
-	}
-	lastMdFile := mdFiles[len(mdFiles)-1]
-	fmt.Println(lastMdFile)
-	f := site.ContentNew(contentPath+".md", title, true, lastMdFile.Id+1)
+	f := site.ContentNew(contentPath+".md", title, true)
 	serr = f.Create()
 	if serr != nil {
 		if strings.Contains(serr.GetMessage(), "file exists") {

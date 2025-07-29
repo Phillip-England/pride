@@ -21,7 +21,6 @@ import (
 )
 
 type Content struct {
-	Id      int
 	Path    string
 	Text    string
 	Dob     string
@@ -29,25 +28,23 @@ type Content struct {
 	Title   string
 }
 
-func ContentNew(path string, title string, isDraft bool, id int) Content {
+func ContentNew(path string, title string, isDraft bool) *Content {
 	var f Content
-	f.Id = id
 	f.Title = title
 	f.Path = path
 	f.Dob = time.Now().UTC().Format(time.RFC3339)
 	f.IsDraft = isDraft
 	f.Text = fmt.Sprintf(`+++
-id = %d
 title = "%s"
 dob = "%s"
 draft = %t
-template = "./templates/default.html"
+template = "/templates/default.html"
 +++
 
 # Welcome
 This is the home page!
-`, f.Id, f.Title, f.Dob, f.IsDraft)
-	return f
+`, f.Title, f.Dob, f.IsDraft)
+	return &f
 }
 
 func (f Content) Create() syserr.SysErr {
@@ -90,7 +87,6 @@ func GetContentPaths() ([]string, syserr.SysErr) {
 }
 
 type MarkdownFile struct {
-	Id              int
 	Path            string
 	ServerPath      string
 	Text            string
@@ -105,16 +101,15 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func MarkdownFileNew(path string, serverPrefix string, theme string, id int) (MarkdownFile, syserr.SysErr) {
+func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir string) (*MarkdownFile, syserr.SysErr) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
-		return mdFile, syserr.New(syserr.CodeDev, fmt.Errorf("failed to read %s", path))
+		return &mdFile, syserr.New(syserr.CodeDev, fmt.Errorf("failed to read %s", path))
 	}
 	mdFile.Text = string(mdBytes)
 	mdFile.Path = path
 	mdFile.Theme = theme
-	mdFile.Id = id
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			highlighting.NewHighlighting(
@@ -142,7 +137,7 @@ func MarkdownFileNew(path string, serverPrefix string, theme string, id int) (Ma
 	var buf bytes.Buffer
 	context := parser.NewContext()
 	if err := md.Convert(mdBytes, &buf, parser.WithContext(context)); err != nil {
-		return mdFile, syserr.New(syserr.CodeLib, err)
+		return &mdFile, syserr.New(syserr.CodeLib, err)
 	}
 	mdFile.Html = buf.String()
 	mdFile.FileName = filepath.Base(mdFile.Path)
@@ -150,10 +145,6 @@ func MarkdownFileNew(path string, serverPrefix string, theme string, id int) (Ma
 	root := md.Parser().Parse(text.NewReader(mdBytes))
 	doc := root.OwnerDocument()
 	mdFile.Meta = doc.Meta()
-	id, ok := mdFile.Meta["id"].(int)
-	if !ok {
-		id = 0
-	}
 	title, ok := mdFile.Meta["title"].(string)
 	if !ok {
 		title = "Hello, World!"
@@ -171,14 +162,13 @@ func MarkdownFileNew(path string, serverPrefix string, theme string, id int) (Ma
 	mdFile.IsDraft = draft
 	template, ok := mdFile.Meta["template"].(string)
 	if !ok {
-		template = "default.html"
-	}
-	if !strings.HasPrefix(template, "./templates") {
-		return mdFile, syserr.HelpNew(fmt.Errorf(`frontmatter 'template' value in %s does not being with "./templates/", this frontmatter value must begin with "./templates/"`, path))
+		template = rootDir + "/templates/" + "default.html"
+	} else {
+		template = rootDir + template
 	}
 	_, err = os.Stat(template)
 	if err != nil {
-		return mdFile, syserr.HelpNew(fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
+		return &mdFile, syserr.HelpNew(fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
 	}
 	mdFile.Template = template
 	serverPath := strings.TrimPrefix(mdFile.Path, serverPrefix)
@@ -190,11 +180,11 @@ func MarkdownFileNew(path string, serverPrefix string, theme string, id int) (Ma
 		serverPath = "/" + serverPath
 	}
 	mdFile.ServerPath = serverPath
-	return mdFile, nil
+	return &mdFile, nil
 }
 
-func ContentLoad() ([]MarkdownFile, syserr.SysErr) {
-	content := []MarkdownFile{}
+func ContentLoadAll() ([]*MarkdownFile, syserr.SysErr) {
+	content := []*MarkdownFile{}
 	config, serr := ConfigLoadFromCwd()
 	if serr != nil {
 		return content, serr
@@ -203,8 +193,8 @@ func ContentLoad() ([]MarkdownFile, syserr.SysErr) {
 	if serr != nil {
 		return content, serr
 	}
-	for i, path := range paths {
-		mdFile, serr := MarkdownFileNew(path, "content", config.Theme, i)
+	for _, path := range paths {
+		mdFile, serr := MarkdownFileLoad(path, "content", config.Theme, config.TemplatesDir)
 		if serr != nil {
 			return content, serr
 		}

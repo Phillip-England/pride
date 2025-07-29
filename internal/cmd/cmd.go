@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Phillip-England/pride/internal/syserr"
 )
@@ -89,4 +90,15 @@ func GetArg(n int) (string, error) {
 		return "", fmt.Errorf(`out of bounds access on os.Args`)
 	}
 	return os.Args[n], nil
+}
+
+func ArgEnforePath(position int) (string, error) {
+	arg, err := GetArg(position)
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasPrefix(arg, "./") {
+		return "", fmt.Errorf("path must begin with './'")
+	}
+	return arg, nil
 }

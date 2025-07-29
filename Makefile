@@ -17,5 +17,14 @@ test-init-mock-content:
 	./pride new content posts/archive/older.md; \
 
 test-build-nav:
-	cd ./tmp/test-site; \
-	./pride build nav; \
+	make test-init-site; \
+	make test-init-mock-content; \
+	cd ./tmp/test-site/navigation; \
+	../pride build nav; \
+
+test-publish:
+	make test-init-site; \
+	make test-init-mock-content; \
+	cd ./tmp/test-site/content; \
+	../pride publish ./index.md; \
+

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -32,11 +31,11 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 
 func BuildNavigation() (string, syserr.SysErr) {
 	fmt.Printf("🧬 building site navigation\n")
-	config, serr := site.ConfigLoadFromCwd()
+	config, serr := site.ConfigLoad()
 	if serr != nil {
 		return "", serr
 	}
-	nav, serr := build("./content", config, true)
+	nav, serr := build(config.ContentDir, config, true)
 	if serr != nil {
 		return "", serr
 	}
@@ -44,6 +43,11 @@ func BuildNavigation() (string, syserr.SysErr) {
 	if err != nil {
 		return "", syserr.New(syserr.CodeLib, fmt.Errorf("goquery failed to load generated navigation: %s", err.Error()))
 	}
+	doc.Find(".pride-inner-nav").Each(func(i int, s *goquery.Selection) {
+		if s.Find("a").Length() == 0 {
+			s.Remove()
+		}
+	})
 	var potErr syserr.SysErr
 	potErr = nil
 	doc.Find(".pride-inner-nav").Each(func(i int, s *goquery.Selection) {
@@ -55,9 +59,9 @@ func BuildNavigation() (string, syserr.SysErr) {
 		}
 		navName, _ := s.Attr("nav-name")
 		s = s.RemoveAttr("nav-name")
-		s = s.RemoveClass("pride-inner-nav")
+		s.RemoveClass("pride-inner-nav")
 		innerNav := fmt.Sprintf("<nav class='pride-nav' nav-name='%s'>%s</nav>", navName, outerHtml)
-		filePath := "./navigation/" + navName + ".html"
+		filePath := config.NavigationDir + "/" + navName + ".html"
 		err = os.WriteFile(filePath, []byte(innerNav), 0755)
 		if err != nil {
 			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", filePath, err.Error()))
@@ -67,7 +71,11 @@ func BuildNavigation() (string, syserr.SysErr) {
 	if potErr != nil {
 		return "", potErr
 	}
-	err = os.WriteFile("./navigation/default.html", []byte(nav), 0755)
+	finalHtml, err := doc.Html()
+	if err != nil {
+		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to generate HTML from cleaned nav: %s", err.Error()))
+	}
+	err = os.WriteFile(config.NavigationDir+"/default.html", []byte(finalHtml), 0755)
 	if err != nil {
 		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", "./navigation/default.html", err.Error()))
 	}
@@ -76,11 +84,17 @@ func BuildNavigation() (string, syserr.SysErr) {
 
 func build(root string, config site.Config, isFirstPass bool) (string, syserr.SysErr) {
 	var nav string
-	navName := strings.ReplaceAll(root, "/", "-")
+	parts := strings.Split(root, config.SiteName)
+	navName := "default"
+	if len(parts) > 1 {
+		navName = parts[1]
+	}
+	navName = strings.ReplaceAll(navName, "/", "-")
 	navName = strings.Replace(navName, "content-", "", 1)
 	if strings.HasPrefix(navName, ".-") {
 		navName = strings.Replace(navName, ".-", "", 1)
 	}
+	navName = strings.TrimPrefix(navName, "-")
 	if isFirstPass {
 		nav = "<nav id='pride-nav-root' class='pride-nav' nav-name='default'><ul>"
 	} else {
@@ -90,16 +104,17 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 	if err != nil {
 		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to read %s while generating site navigation", root))
 	}
-	mdFiles := []site.MarkdownFile{}
+	mdFiles := []*site.MarkdownFile{}
 	for _, entry := range entries {
+		path := filepath.Join(root, entry.Name())
 		if entry.IsDir() {
-			innerNav, serr := build(filepath.Join(root, entry.Name()), config, false)
+			innerNav, serr := build(path, config, false)
 			if serr != nil {
 				return "", serr
 			}
 			nav += innerNav
 		} else {
-			mdFile, serr := site.MarkdownFileNew(filepath.Join(root, entry.Name()), "content", config.Theme, 0)
+			mdFile, serr := site.MarkdownFileLoad(path, "content", config.Theme, config.Dir)
 			if serr != nil {
 				return "", serr
 			}
@@ -126,25 +141,12 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 				}
 			} else {
 				if !mdFile.IsDraft {
-					mdFiles = append([]site.MarkdownFile{mdFile}, mdFiles...)
+					mdFiles = append([]*site.MarkdownFile{mdFile}, mdFiles...)
 				}
 			}
 		}
 	}
-	mdFilePaths := []string{}
 	for _, mdFile := range mdFiles {
-		mdFilePaths = append(mdFilePaths, mdFile.Path)
-	}
-	sort.Strings(mdFilePaths)
-	mdFilesSorted := []site.MarkdownFile{}
-	for _, path := range mdFilePaths {
-		for _, mdFile := range mdFiles {
-			if mdFile.Path == path {
-				mdFilesSorted = append(mdFilesSorted, mdFile)
-			}
-		}
-	}
-	for _, mdFile := range mdFilesSorted {
 		navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
 		nav += navItem
 	}

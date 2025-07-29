@@ -2,26 +2,32 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/Phillip-England/pride/internal/site"
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
 type Publish struct {
 	Flag           Flag
 	ArgContentPath string
+	Config         site.Config
+	MdFile         *site.MarkdownFile
 }
 
 func PublishNew(flag Flag) (*Publish, syserr.SysErr) {
 	cmd := &Publish{}
 	cmd.Flag = flag
-	argContentPath, err := GetArg(2)
+	argContentPath, err := ArgEnforePath(2)
 	if err != nil {
-		return cmd, syserr.HelpNew(fmt.Errorf(`missing <CONTENT-PATH> in 'pride publish'`))
+		return cmd, syserr.HelpNew(fmt.Errorf(`<CONTENT-PATH> error\n%s`, err.Error()))
 	}
-	argContentPath = strings.TrimPrefix(argContentPath, ".")
-	argContentPath = strings.TrimPrefix(argContentPath, "./")
-	// argContentPath = strings.TrimPrefix(argContentPath, "content")
+	config, serr := site.ConfigLoad()
+	if serr != nil {
+		return cmd, serr
+	}
+	cmd.Config = config
+	cmd.ArgContentPath = argContentPath
+	println(cmd.Config.Path)
 	return cmd, nil
 }
 
