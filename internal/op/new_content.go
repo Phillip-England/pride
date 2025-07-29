@@ -17,24 +17,21 @@ type NewContent struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
+func (op *NewContent) Exec(c cmd.Cmd) *syserr.Err {
 	cmdMake, ok := c.(*cmd.New)
 	if !ok {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure, did you use pointers correctly? did you return a valid op code?"))
+		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
 	}
 	contentPath := "./content/" + cmdMake.ArgDestinationStripped
 	fmt.Printf("🧬 making new content at %s.md\n", contentPath)
-	_, serr := site.ConfigLoadFromCwd()
+	_, serr := site.ConfigLoad()
 	if serr != nil {
 		return serr
 	}
 	contentDirPath := "./content"
-	info, err := os.Stat(contentDirPath)
-	if os.IsNotExist(err) || !info.IsDir() {
-		return syserr.MiaNew(fmt.Errorf("could not located %s directory", contentDirPath))
-	}
+	_, err := os.Stat(contentDirPath)
 	if err != nil {
-		return syserr.DevNew(fmt.Errorf("could not load information on %s after it has been confirmed to exist", contentDirPath))
+		return syserr.New(syserr.Here(), err.Error())
 	}
 	fileName := filepath.Base(cmdMake.ArgDestination)
 	fileName = strings.TrimSuffix(fileName, ".md")
@@ -48,9 +45,6 @@ func (op *NewContent) Exec(c cmd.Cmd) syserr.SysErr {
 	f := site.ContentNew(contentPath+".md", title, true)
 	serr = f.Create()
 	if serr != nil {
-		if strings.Contains(serr.GetMessage(), "file exists") {
-			return syserr.HelpNew(fmt.Errorf("%s already exists", contentPath))
-		}
 		return serr
 	}
 	return nil

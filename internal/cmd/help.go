@@ -8,7 +8,7 @@ type Help struct {
 	Flag Flag
 }
 
-func HelpNew(flag Flag) (*Help, syserr.SysErr) {
+func HelpNew(flag Flag) (*Help, *syserr.Err) {
 	cmd := &Help{}
 	cmd.Flag = flag
 	return cmd, nil
@@ -18,6 +18,6 @@ func (cmd Help) GetFlag() Flag {
 	return cmd.Flag
 }
 
-func (cmd Help) GetOpCode() (int, syserr.SysErr) {
+func (cmd Help) GetOpCode() (int, *syserr.Err) {
 	return 0, nil
 }

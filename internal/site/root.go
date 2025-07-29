@@ -1,7 +1,6 @@
 package site
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -38,13 +37,13 @@ func RootNew(path string) Root {
 	return dir
 }
 
-func (dir Root) Create() syserr.SysErr {
+func (dir Root) Create() *syserr.Err {
 	err := os.Mkdir(dir.PathRoot, 0755)
 	if err != nil {
 		if strings.Contains(err.Error(), "file exists") {
-			return syserr.New(syserr.CodeHelp, fmt.Errorf("<DESTINATION> %s already exists, please provide a new name or delete %s", dir.PathRoot, dir.PathRoot))
+			return syserr.New(syserr.Here(), "<DESTINATION> %s already exists, please provide a new name or delete %s", dir.PathRoot, dir.PathRoot)
 		}
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("<DESTINATION> unanticipated error when creating %s, are you using a valid directory name for your site?", dir.PathRoot))
+		return syserr.New(syserr.Here(), "<DESTINATION> unanticipated error when creating %s, are you using a valid directory name for your site?", dir.PathRoot)
 
 	}
 	dirsToMake := []string{
@@ -57,33 +56,33 @@ func (dir Root) Create() syserr.SysErr {
 	for _, dir := range dirsToMake {
 		err = os.Mkdir(dir, 0755)
 		if err != nil {
-			return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s", dir))
+			return syserr.New(syserr.Here(), "unanticipated error when creating %s", dir)
 		}
 	}
 	config := ConfigNew(dir.PathConfig)
-	syserr := config.Create()
-	if syserr != nil {
-		return syserr
+	serr := config.Create()
+	if serr != nil {
+		return serr
 	}
 	layout := LayoutNew(dir.PathLayoutBase)
-	syserr = layout.Create()
-	if syserr != nil {
-		return syserr
+	serr = layout.Create()
+	if err != nil {
+		return serr
 	}
 	template := TemplateNew(dir.PathTemplateBase)
-	syserr = template.Create()
-	if syserr != nil {
-		return syserr
+	serr = template.Create()
+	if serr != nil {
+		return serr
 	}
 	css := CssNew(dir.PathCssBase)
-	syserr = css.Create()
-	if syserr != nil {
-		return syserr
+	serr = css.Create()
+	if serr != nil {
+		return serr
 	}
 	md := ContentNew(dir.PathContentBase, "Home Page", false)
-	syserr = md.Create()
-	if syserr != nil {
-		return syserr
+	serr = md.Create()
+	if serr != nil {
+		return serr
 	}
 	return nil
 }

@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/Phillip-England/pride/internal/site"
 	"github.com/Phillip-England/pride/internal/syserr"
 )
@@ -14,12 +12,12 @@ type Publish struct {
 	MdFile         *site.MarkdownFile
 }
 
-func PublishNew(flag Flag) (*Publish, syserr.SysErr) {
+func PublishNew(flag Flag) (*Publish, *syserr.Err) {
 	cmd := &Publish{}
 	cmd.Flag = flag
 	argContentPath, err := ArgEnforePath(2)
 	if err != nil {
-		return cmd, syserr.HelpNew(fmt.Errorf(`<CONTENT-PATH> error\n%s`, err.Error()))
+		return cmd, syserr.New(syserr.Here(), `<CONTENT-PATH> error\n%s`, err.Error())
 	}
 	config, serr := site.ConfigLoad()
 	if serr != nil {
@@ -35,6 +33,6 @@ func (cmd Publish) GetFlag() Flag {
 	return cmd.Flag
 }
 
-func (cmd Publish) GetOpCode() (int, syserr.SysErr) {
+func (cmd Publish) GetOpCode() (int, *syserr.Err) {
 	return 4, nil
 }

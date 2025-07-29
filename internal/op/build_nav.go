@@ -13,14 +13,19 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+const defaultNavName = "default"
+const navRootId = "pride-nav-root"
+const navOuterClass = "pride-nav"
+const navItemClass = "pride-nav-item"
+
 type BuildNav struct {
 	Code int
 }
 
-func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
+func (op *BuildNav) Exec(c cmd.Cmd) *syserr.Err {
 	_, ok := c.(*cmd.Build)
 	if !ok {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure, did you use pointers correctly? did you return a valid op code?"))
+		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
 	}
 	_, serr := BuildNavigation()
 	if serr != nil {
@@ -29,32 +34,34 @@ func (op *BuildNav) Exec(c cmd.Cmd) syserr.SysErr {
 	return nil
 }
 
-func BuildNavigation() (string, syserr.SysErr) {
+// an operation responsible for generating .html files which represent the site's navigation
+// the navigation files mirror the structure of the ./content directory within the site's root
+func BuildNavigation() (string, *syserr.Err) {
 	fmt.Printf("🧬 building site navigation\n")
 	config, serr := site.ConfigLoad()
 	if serr != nil {
 		return "", serr
 	}
-	nav, serr := build(config.ContentDir, config, true)
+	nav, serr := build(config, true)
 	if serr != nil {
 		return "", serr
 	}
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(nav))
 	if err != nil {
-		return "", syserr.New(syserr.CodeLib, fmt.Errorf("goquery failed to load generated navigation: %s", err.Error()))
+		return "", syserr.New(syserr.Here(), err.Error())
 	}
 	doc.Find(".pride-inner-nav").Each(func(i int, s *goquery.Selection) {
 		if s.Find("a").Length() == 0 {
 			s.Remove()
 		}
 	})
-	var potErr syserr.SysErr
+	var potErr *syserr.Err
 	potErr = nil
 	doc.Find(".pride-inner-nav").Each(func(i int, s *goquery.Selection) {
 		inner := s.Children().First()
 		outerHtml, err := goquery.OuterHtml(inner)
 		if err != nil {
-			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("goquery failed to parse the outerHTML of an inner navigation, here is their provided error: %s", err.Error()))
+			potErr = syserr.New(syserr.Here(), err.Error())
 			return
 		}
 		navName, _ := s.Attr("nav-name")
@@ -64,7 +71,7 @@ func BuildNavigation() (string, syserr.SysErr) {
 		filePath := config.NavigationDir + "/" + navName + ".html"
 		err = os.WriteFile(filePath, []byte(innerNav), 0755)
 		if err != nil {
-			potErr = syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", filePath, err.Error()))
+			potErr = syserr.New(syserr.Here(), err.Error())
 		}
 
 	})
@@ -73,19 +80,20 @@ func BuildNavigation() (string, syserr.SysErr) {
 	}
 	finalHtml, err := doc.Html()
 	if err != nil {
-		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to generate HTML from cleaned nav: %s", err.Error()))
+		return "", syserr.New(syserr.Here(), err.Error())
 	}
 	err = os.WriteFile(config.NavigationDir+"/default.html", []byte(finalHtml), 0755)
 	if err != nil {
-		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to write generated nav to %s because:\n%s", "./navigation/default.html", err.Error()))
+		return "", syserr.New(syserr.Here(), err.Error())
 	}
 	return nav, nil
 }
 
-func build(root string, config site.Config, isFirstPass bool) (string, syserr.SysErr) {
+// recursively crawl a directoy and build out navigation along the way based off of the .md files found within
+func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 	var nav string
-	parts := strings.Split(root, config.SiteName)
-	navName := "default"
+	var navName string
+	parts := strings.Split(config.ContentDir, config.SiteName)
 	if len(parts) > 1 {
 		navName = parts[1]
 	}
@@ -96,21 +104,21 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 	}
 	navName = strings.TrimPrefix(navName, "-")
 	if isFirstPass {
-		nav = "<nav id='pride-nav-root' class='pride-nav' nav-name='default'><ul>"
+		nav = fmt.Sprintf("<nav id='%s' class='%s' nav-name='%s'><ul>", navRootId, navOuterClass, defaultNavName)
 	} else {
 		nav = fmt.Sprintf(`<li class='pride-inner-nav' nav-name='%s'>%s<ul>`, navName, navName)
 	}
-	entries, err := os.ReadDir(root)
+	entries, err := os.ReadDir(config.ContentDir)
 	if err != nil {
-		return "", syserr.New(syserr.CodeDev, fmt.Errorf("failed to read %s while generating site navigation", root))
+		return "", syserr.New(syserr.Here(), err.Error())
 	}
 	mdFiles := []*site.MarkdownFile{}
 	for _, entry := range entries {
-		path := filepath.Join(root, entry.Name())
+		path := filepath.Join(config.ContentDir, entry.Name())
 		if entry.IsDir() {
-			innerNav, serr := build(path, config, false)
-			if serr != nil {
-				return "", serr
+			innerNav, err := build(config, false)
+			if err != nil {
+				return "", err
 			}
 			nav += innerNav
 		} else {
@@ -118,8 +126,6 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 			if serr != nil {
 				return "", serr
 			}
-			// navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
-			// nav += navItem
 			if len(mdFiles) == 0 {
 				if !mdFile.IsDraft {
 					mdFiles = append(mdFiles, mdFile)
@@ -129,11 +135,11 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 			prevMdFile := mdFiles[len(mdFiles)-1]
 			prevDob, err := time.Parse(time.RFC3339, prevMdFile.Dob)
 			if err != nil {
-				return "", syserr.DevNew(fmt.Errorf("failed to parse time from nav link during nav generation\n%s", err.Error()))
+				return "", syserr.New(syserr.Here(), err.Error())
 			}
 			currentDob, err := time.Parse(time.RFC3339, mdFile.Dob)
 			if err != nil {
-				return "", syserr.DevNew(fmt.Errorf("failed to parse time from nav link during nav generation\n%s", err.Error()))
+				return "", syserr.New(syserr.Here(), err.Error())
 			}
 			if prevDob.Before(currentDob) {
 				if !mdFile.IsDraft {
@@ -147,7 +153,7 @@ func build(root string, config site.Config, isFirstPass bool) (string, syserr.Sy
 		}
 	}
 	for _, mdFile := range mdFiles {
-		navItem := fmt.Sprintf(`<li class='pride-nav-item' pride-dob='%s'><a href="%s">%s</a></li>`, config.Dob, mdFile.ServerPath, mdFile.Title)
+		navItem := fmt.Sprintf(`<li class='%s' pride-dob='%s'><a href="%s">%s</a></li>`, navItemClass, config.Dob, mdFile.ServerPath, mdFile.Title)
 		nav += navItem
 	}
 	if isFirstPass {

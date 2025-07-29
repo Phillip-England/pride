@@ -12,10 +12,10 @@ type Publish struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *Publish) Exec(c cmd.Cmd) syserr.SysErr {
+func (op *Publish) Exec(c cmd.Cmd) *syserr.Err {
 	cmd, ok := c.(*cmd.Publish)
 	if !ok {
-		return syserr.New(syserr.CodeDev, fmt.Errorf("type assertion failure, did you use pointers correctly? did you return a valid op code?"))
+		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
 	}
 	fmt.Println(cmd.ArgContentPath)
 	return nil

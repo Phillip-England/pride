@@ -47,28 +47,27 @@ This is the home page!
 	return &f
 }
 
-func (f Content) Create() syserr.SysErr {
+func (f Content) Create() *syserr.Err {
 	dir := filepath.Dir(f.Path)
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("failed to create parent directories for %s => %s", f.Path, err.Error()))
+		return syserr.New(syserr.Here(), "failed to create parent directories for %s => %s", f.Path, err.Error())
 	}
 	file, err := os.OpenFile(f.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s => %s", f.Path, err.Error()))
+		return syserr.New(syserr.Here(), "unanticipated error when creating %s => %s", f.Path, err.Error())
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(f.Text))
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when writing to %s => %s", f.Path, err.Error()))
+		return syserr.New(syserr.Here(), "unanticipated error when writing to %s => %s", f.Path, err.Error())
 	}
 	return nil
 }
 
-func GetContentPaths() ([]string, syserr.SysErr) {
+func GetContentPaths(config Config) ([]string, *syserr.Err) {
 	paths := []string{}
-	potentialErrCode := 0
-	err := filepath.WalkDir("./content", func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(config.ContentDir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -80,7 +79,7 @@ func GetContentPaths() ([]string, syserr.SysErr) {
 		return nil
 	})
 	if err != nil {
-		return paths, syserr.New(syserr.ErrCode(potentialErrCode), err)
+		return paths, syserr.New(syserr.Here(), err.Error())
 	}
 	sort.Strings(paths)
 	return paths, nil
@@ -101,11 +100,11 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir string) (*MarkdownFile, syserr.SysErr) {
+func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir string) (*MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
-		return &mdFile, syserr.New(syserr.CodeDev, fmt.Errorf("failed to read %s", path))
+		return &mdFile, syserr.New(syserr.Here(), "failed to read %s", path)
 	}
 	mdFile.Text = string(mdBytes)
 	mdFile.Path = path
@@ -137,7 +136,7 @@ func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir st
 	var buf bytes.Buffer
 	context := parser.NewContext()
 	if err := md.Convert(mdBytes, &buf, parser.WithContext(context)); err != nil {
-		return &mdFile, syserr.New(syserr.CodeLib, err)
+		return &mdFile, syserr.New(syserr.Here(), err.Error())
 	}
 	mdFile.Html = buf.String()
 	mdFile.FileName = filepath.Base(mdFile.Path)
@@ -168,7 +167,7 @@ func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir st
 	}
 	_, err = os.Stat(template)
 	if err != nil {
-		return &mdFile, syserr.HelpNew(fmt.Errorf(`frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path))
+		return &mdFile, syserr.New(syserr.Here(), `frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path)
 	}
 	mdFile.Template = template
 	serverPath := strings.TrimPrefix(mdFile.Path, serverPrefix)
@@ -183,13 +182,13 @@ func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir st
 	return &mdFile, nil
 }
 
-func ContentLoadAll() ([]*MarkdownFile, syserr.SysErr) {
+func ContentLoadAll() ([]*MarkdownFile, *syserr.Err) {
 	content := []*MarkdownFile{}
-	config, serr := ConfigLoadFromCwd()
+	config, serr := ConfigLoad()
 	if serr != nil {
 		return content, serr
 	}
-	paths, serr := GetContentPaths()
+	paths, serr := GetContentPaths(config)
 	if serr != nil {
 		return content, serr
 	}

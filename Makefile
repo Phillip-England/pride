@@ -19,6 +19,16 @@ test-init-mock-content:
 test-build-nav:
 	make test-init-site; \
 	make test-init-mock-content; \
+	cd ./tmp/test-site; \
+	./pride build nav; \
+	cd navigation; \
+	../pride build nav; \
+
+test-build-nav-root:
+	cd ./tmp/test-site; \
+	./pride build nav; \
+
+test-build-nav-inner:
 	cd ./tmp/test-site/navigation; \
 	../pride build nav; \
 

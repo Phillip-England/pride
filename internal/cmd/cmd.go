@@ -52,10 +52,10 @@ func FlagNew() Flag {
 
 type Cmd interface {
 	GetFlag() Flag
-	GetOpCode() (int, syserr.SysErr)
+	GetOpCode() (int, *syserr.Err)
 }
 
-func CmdNew() (Cmd, syserr.SysErr) {
+func Extract() (Cmd, *syserr.Err) {
 	flag := FlagNew()
 	switch flag {
 	case FlagNewNew:

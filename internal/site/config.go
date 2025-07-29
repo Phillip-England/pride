@@ -41,31 +41,12 @@ server = "%s"`, config.Version, config.Dob, config.Server)
 	return config
 }
 
-func ConfigLoadFromCwd() (Config, syserr.SysErr) {
-	var config Config
-	configPath := "./pride.toml"
-	_, err := os.Stat(configPath)
-	if err != nil {
-		return config, syserr.New(syserr.CodeMia, fmt.Errorf("failed to located %s", configPath))
-	}
-	file, err := os.ReadFile(configPath)
-	if err != nil {
-		return config, syserr.New(syserr.CodeMia, fmt.Errorf("failed to read %s", configPath))
-	}
-	config.Text = string(file)
-	config.Path = configPath
-	if _, err := toml.DecodeFile(config.Path, &config); err != nil {
-		return config, syserr.New(syserr.CodeDev, fmt.Errorf("failed to decode %s, at this point, the file has been verified as existing, so this is a developer error", config.Path))
-	}
-	return config, nil
-}
-
-func ConfigLoad() (Config, syserr.SysErr) {
+func ConfigLoad() (Config, *syserr.Err) {
 	var config Config
 	foundConfig := false
 	dir, err := os.Getwd()
 	if err != nil {
-		return config, syserr.DevNew(fmt.Errorf("failed to get a reference to the cwd becuase:\n%s", err.Error()))
+		return config, syserr.New(syserr.Here(), err.Error())
 	}
 	for {
 		configPath := dir + "/pride.toml"
@@ -81,7 +62,7 @@ func ConfigLoad() (Config, syserr.SysErr) {
 		config.Text = string(file)
 		config.Path = configPath
 		if _, err := toml.DecodeFile(config.Path, &config); err != nil {
-			return config, syserr.New(syserr.CodeDev, fmt.Errorf("failed to decode %s, at this point, the file has been verified as existing, so this is a developer error", config.Path))
+			return config, syserr.New(syserr.Here(), err.Error())
 		}
 		foundConfig = true
 		config.Dir = dir
@@ -89,7 +70,7 @@ func ConfigLoad() (Config, syserr.SysErr) {
 		break
 	}
 	if !foundConfig {
-		return config, syserr.MiaNew(fmt.Errorf("failed to load pride.toml from current dir, or any of it's parent dirs"))
+		return config, syserr.New(syserr.Here(), err.Error())
 	}
 	config.ContentDir = config.Dir + "/content"
 	config.TemplatesDir = config.Dir + "/templates"
@@ -97,15 +78,15 @@ func ConfigLoad() (Config, syserr.SysErr) {
 	return config, nil
 }
 
-func (config Config) Create() syserr.SysErr {
+func (config Config) Create() *syserr.Err {
 	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s", config.Path))
+		return syserr.New(syserr.Here(), err.Error())
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(config.Text))
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when writing to %s", config.Path))
+		return syserr.New(syserr.Here(), err.Error())
 	}
 	return nil
 }

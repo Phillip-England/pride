@@ -14,9 +14,8 @@ type Build struct {
 	BuildType              buildType
 }
 
-func BuildNew(flag Flag) (*Build, syserr.SysErr) {
+func BuildNew(flag Flag) (*Build, *syserr.Err) {
 	cmd := &Build{}
-
 	return cmd, nil
 }
 
@@ -24,12 +23,12 @@ func (cmd Build) GetFlag() Flag {
 	return cmd.Flag
 }
 
-func (cmd Build) GetOpCode() (int, syserr.SysErr) {
+func (cmd Build) GetOpCode() (int, *syserr.Err) {
 	switch cmd.BuildType {
 	case buildTypeNav:
 		return 3, nil
 	default:
-		return -1, syserr.New(syserr.CodeHelp, fmt.Errorf("invalid <CONTENT_TYPE> passed to 'pride new'"))
+		return -1, syserr.New(syserr.Here(), "invalid <CONTENT_TYPE> passed to 'pride new'")
 	}
 }
 

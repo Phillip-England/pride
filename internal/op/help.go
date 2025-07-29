@@ -12,7 +12,7 @@ type Help struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *Help) Exec(c cmd.Cmd) syserr.SysErr {
+func (op *Help) Exec(c cmd.Cmd) *syserr.Err {
 	fmt.Println(`🐍 pride - simple static sites
 
 [new]

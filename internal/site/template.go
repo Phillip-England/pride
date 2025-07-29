@@ -1,7 +1,6 @@
 package site
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/Phillip-England/pride/internal/syserr"
@@ -35,15 +34,15 @@ func TemplateNew(path string) Template {
 	return config
 }
 
-func (f Template) Create() syserr.SysErr {
+func (f Template) Create() *syserr.Err {
 	file, err := os.OpenFile(f.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when creating %s", f.Path))
+		return syserr.New(syserr.Here(), "unanticipated error when creating %s", f.Path)
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(f.Text))
 	if err != nil {
-		return syserr.New(syserr.CodeHelp, fmt.Errorf("unanticipated error when writing to %s", f.Path))
+		return syserr.New(syserr.Here(), "unanticipated error when writing to %s", f.Path)
 	}
 	return nil
 }
