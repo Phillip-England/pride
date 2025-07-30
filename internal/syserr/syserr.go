@@ -3,6 +3,7 @@ package syserr
 import (
 	"errors"
 	"fmt"
+	"os"
 	"runtime"
 )
 
@@ -24,13 +25,7 @@ func New(location *Location, format string, args ...any) *Err {
 }
 
 func (e Err) Print() {
-	fmt.Printf("🚨 perr.Err\n")
-	fmt.Printf("  File   : %s\n", e.File)
-	fmt.Printf("  Line   : %d\n", e.Line)
-	fmt.Printf("  Message: %s\n", e.Message)
-	if e.Err != nil {
-		fmt.Printf("  Cause  : %v\n", e.Err)
-	}
+	fmt.Fprintf(os.Stderr, "🚨 %s:%d — %s\n", e.File, e.Line, e.Message)
 }
 
 func (e Err) Error() string {

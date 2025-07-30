@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/Phillip-England/pride/internal/syserr"
 )
@@ -32,7 +31,7 @@ func (flag Flag) String() string {
 	}
 }
 
-func FlagNew() Flag {
+func flagNew() Flag {
 	args := os.Args
 	if len(args) <= 1 {
 		return FlagHelp
@@ -56,7 +55,7 @@ type Cmd interface {
 }
 
 func Extract() (Cmd, *syserr.Err) {
-	flag := FlagNew()
+	flag := flagNew()
 	switch flag {
 	case FlagNewNew:
 		cmd, err := NewNew(flag)
@@ -92,13 +91,16 @@ func GetArg(n int) (string, error) {
 	return os.Args[n], nil
 }
 
-func ArgEnforePath(position int) (string, error) {
+func ArgIsFilePath(position int) (string, bool) {
 	arg, err := GetArg(position)
 	if err != nil {
-		return "", err
+		return "", false
 	}
-	if !strings.HasPrefix(arg, "./") {
-		return "", fmt.Errorf("path must begin with './'")
+	f, err := os.OpenFile(arg, os.O_CREATE, 0644)
+	if err != nil {
+		return "", false
 	}
-	return arg, nil
+	f.Close()
+	os.Remove(arg)
+	return arg, true
 }

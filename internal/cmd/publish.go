@@ -15,9 +15,9 @@ type Publish struct {
 func PublishNew(flag Flag) (*Publish, *syserr.Err) {
 	cmd := &Publish{}
 	cmd.Flag = flag
-	argContentPath, err := ArgEnforePath(2)
-	if err != nil {
-		return cmd, syserr.New(syserr.Here(), `<CONTENT-PATH> error\n%s`, err.Error())
+	argContentPath, exists := ArgIsFilePath(2)
+	if !exists {
+		return cmd, syserr.New(syserr.Here(), "%s is not a valid file path", argContentPath)
 	}
 	config, serr := site.ConfigLoad()
 	if serr != nil {
@@ -25,7 +25,6 @@ func PublishNew(flag Flag) (*Publish, *syserr.Err) {
 	}
 	cmd.Config = config
 	cmd.ArgContentPath = argContentPath
-	println(cmd.Config.Path)
 	return cmd, nil
 }
 
