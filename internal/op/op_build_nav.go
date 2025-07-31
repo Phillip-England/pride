@@ -18,12 +18,12 @@ const navRootId = "pride-nav-root"
 const navOuterClass = "pride-nav"
 const navItemClass = "pride-nav-item"
 
-type BuildNav struct {
+type OpBuildNav struct {
 	Code int
 }
 
-func (op *BuildNav) Exec(c cmd.Cmd) *syserr.Err {
-	_, ok := c.(*cmd.Build)
+func (op *OpBuildNav) Exec(c cmd.Cmd) *syserr.Err {
+	_, ok := c.(*cmd.CmdBuild)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
 	}
@@ -34,8 +34,6 @@ func (op *BuildNav) Exec(c cmd.Cmd) *syserr.Err {
 	return nil
 }
 
-// an operation responsible for generating .html files which represent the site's navigation
-// the navigation files mirror the structure of the ./content directory within the site's root
 func BuildNavigation() (string, *syserr.Err) {
 	fmt.Printf("🧬 building site navigation\n")
 	config, serr := site.ConfigLoad()
@@ -89,7 +87,6 @@ func BuildNavigation() (string, *syserr.Err) {
 	return nav, nil
 }
 
-// recursively crawl a directoy and build out navigation along the way based off of the .md files found within
 func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 	var nav string
 	var navName string

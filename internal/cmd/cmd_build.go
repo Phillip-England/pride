@@ -1,29 +1,22 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type Build struct {
-	Flag                   Flag
+type CmdBuild struct {
 	ArgMakeType            string
 	ArgDestination         string
 	ArgDestinationStripped string
 	BuildType              buildType
 }
 
-func BuildNew(flag Flag) (*Build, *syserr.Err) {
-	cmd := &Build{}
+func NewCmdBuild() (*CmdBuild, *syserr.Err) {
+	cmd := &CmdBuild{}
 	return cmd, nil
 }
 
-func (cmd Build) GetFlag() Flag {
-	return cmd.Flag
-}
-
-func (cmd Build) GetOpCode() (int, *syserr.Err) {
+func (cmd CmdBuild) GetOpCode() (int, *syserr.Err) {
 	switch cmd.BuildType {
 	case buildTypeNav:
 		return 3, nil
@@ -37,12 +30,3 @@ type buildType int
 const (
 	buildTypeNav buildType = iota
 )
-
-func buildTypeNew(buildType string) (buildType, error) {
-	switch buildType {
-	case "nav":
-		return buildTypeNav, nil
-	default:
-		return 0, fmt.Errorf("invalid build type provided")
-	}
-}

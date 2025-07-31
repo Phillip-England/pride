@@ -7,13 +7,13 @@ import (
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type Publish struct {
+type OpPublish struct {
 	Code int
 	Cmd  cmd.Cmd
 }
 
-func (op *Publish) Exec(c cmd.Cmd) *syserr.Err {
-	cmd, ok := c.(*cmd.Publish)
+func (op *OpPublish) Exec(c cmd.Cmd) *syserr.Err {
+	cmd, ok := c.(*cmd.CmdPublish)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
 	}

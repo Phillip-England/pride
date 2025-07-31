@@ -7,16 +7,15 @@ import (
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type New struct {
-	Flag                   Flag
+type CmdNew struct {
 	ArgMakeType            string
 	ArgDestination         string
 	ArgDestinationStripped string
 	ContentType            contentType
 }
 
-func NewNew(flag Flag) (*New, *syserr.Err) {
-	cmd := &New{}
+func NewCmdNew() (*CmdNew, *syserr.Err) {
+	cmd := &CmdNew{}
 	argMakeType, err := GetArg(2)
 	if err != nil {
 		return cmd, syserr.New(syserr.Here(), "missing <CONTENT-TYPE> and <DESTINATION> in 'pride new'")
@@ -25,7 +24,6 @@ func NewNew(flag Flag) (*New, *syserr.Err) {
 	if err != nil {
 		return cmd, syserr.New(syserr.Here(), "invalid <CONTENT-TYPE> passed to 'pride new'")
 	}
-	cmd.Flag = flag
 	cmd.ArgMakeType = argMakeType
 	cmd.ContentType = contentType
 	argDestination, err := GetArg(3)
@@ -43,11 +41,7 @@ func NewNew(flag Flag) (*New, *syserr.Err) {
 	return cmd, nil
 }
 
-func (cmd New) GetFlag() Flag {
-	return cmd.Flag
-}
-
-func (cmd New) GetOpCode() (int, *syserr.Err) {
+func (cmd CmdNew) GetOpCode() (int, *syserr.Err) {
 	switch cmd.ContentType {
 	case contentTypeSite:
 		return 1, nil

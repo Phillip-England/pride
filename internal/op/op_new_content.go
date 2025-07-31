@@ -12,13 +12,13 @@ import (
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type NewContent struct {
+type OpNewContent struct {
 	Code int
 	Cmd  cmd.Cmd
 }
 
-func (op *NewContent) Exec(c cmd.Cmd) *syserr.Err {
-	cmdMake, ok := c.(*cmd.New)
+func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
+	cmdMake, ok := c.(*cmd.CmdNew)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
 	}

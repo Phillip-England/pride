@@ -7,12 +7,12 @@ import (
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type Help struct {
+type OpHelp struct {
 	Code int
 	Cmd  cmd.Cmd
 }
 
-func (op *Help) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpHelp) Exec(c cmd.Cmd) *syserr.Err {
 	fmt.Println(`🐍 pride - simple static sites
 
 [new]
