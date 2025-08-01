@@ -184,7 +184,7 @@ func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir st
 
 func ContentLoadAll() ([]*MarkdownFile, *syserr.Err) {
 	content := []*MarkdownFile{}
-	config, serr := ConfigLoad()
+	config, serr := LoadConfig()
 	if serr != nil {
 		return content, serr
 	}

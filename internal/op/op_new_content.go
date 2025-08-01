@@ -24,7 +24,7 @@ func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
 	}
 	contentPath := "./content/" + cmdMake.ArgDestinationStripped
 	fmt.Printf("🧬 making new content at %s.md\n", contentPath)
-	_, serr := site.ConfigLoad()
+	_, serr := site.LoadConfig()
 	if serr != nil {
 		return serr
 	}

@@ -26,7 +26,7 @@ type Config struct {
 	NavigationDir string
 }
 
-func ConfigNew(path string) Config {
+func NewConfig(path string) Config {
 	var config Config
 	config.Path = path
 	config.Dir = strings.TrimSuffix(path, "/pride.toml")
@@ -41,7 +41,7 @@ server = "%s"`, config.Version, config.Dob, config.Server)
 	return config
 }
 
-func ConfigLoad() (Config, *syserr.Err) {
+func LoadConfig() (Config, *syserr.Err) {
 	var config Config
 	foundConfig := false
 	dir, err := os.Getwd()

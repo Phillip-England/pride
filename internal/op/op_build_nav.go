@@ -36,7 +36,7 @@ func (op *OpBuildNav) Exec(c cmd.Cmd) *syserr.Err {
 
 func BuildNavigation() (string, *syserr.Err) {
 	fmt.Printf("🧬 building site navigation\n")
-	config, serr := site.ConfigLoad()
+	config, serr := site.LoadConfig()
 	if serr != nil {
 		return "", serr
 	}

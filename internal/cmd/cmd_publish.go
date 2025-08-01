@@ -17,7 +17,7 @@ func NewCmdPublish() (*CmdPublish, *syserr.Err) {
 	if !exists {
 		return cmd, syserr.New(syserr.Here(), "%s is not a valid file path", argContentPath)
 	}
-	config, serr := site.ConfigLoad()
+	config, serr := site.LoadConfig()
 	if serr != nil {
 		return cmd, serr
 	}

@@ -59,7 +59,7 @@ func (dir Root) Create() *syserr.Err {
 			return syserr.New(syserr.Here(), "unanticipated error when creating %s", dir)
 		}
 	}
-	config := ConfigNew(dir.PathConfig)
+	config := NewConfig(dir.PathConfig)
 	serr := config.Create()
 	if serr != nil {
 		return serr

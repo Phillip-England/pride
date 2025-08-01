@@ -1,9 +1,14 @@
 package site
 
-import "path/filepath"
+import (
+	"os"
+	"path/filepath"
+
+	"github.com/Phillip-England/pride/internal/syserr"
+)
 
 type PrideDir struct {
-	Root          string
+	RootDir       string
 	ContentDir    string
 	ConfigPath    string
 	StaticDir     string
@@ -12,15 +17,44 @@ type PrideDir struct {
 	LayoutsDir    string
 }
 
-// Returns a fully populated PrideDir struct based on a root path
-func NewPrideDir(path string) *PrideDir {
-	return &PrideDir{
-		Root:          path,
-		ContentDir:    filepath.Join(path, "content"),
-		ConfigPath:    filepath.Join(path, "pride.toml"),
-		StaticDir:     filepath.Join(path, "static"),
-		TemplatesDir:  filepath.Join(path, "templates"),
-		NavigationDir: filepath.Join(path, "navigation"),
-		LayoutsDir:    filepath.Join(path, "layouts"),
+func NewPrideDir(path string) (PrideDir, *syserr.Err) {
+	var dir PrideDir
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
+	dir.RootDir = absolutePath
+	dir.ContentDir = filepath.Join(absolutePath, "content")
+	dir.ConfigPath = filepath.Join(absolutePath, "pride.toml")
+	dir.StaticDir = filepath.Join(absolutePath, "static")
+	dir.TemplatesDir = filepath.Join(absolutePath, "templates")
+	dir.NavigationDir = filepath.Join(absolutePath, "navigation")
+	dir.LayoutsDir = filepath.Join(absolutePath, "layouts")
+	return dir, nil
+}
+
+func (dir PrideDir) CreateIfNotExists() *syserr.Err {
+	err := os.Mkdir(dir.RootDir, 0755)
+	if err != nil {
+		return syserr.New(syserr.Here(), "%s", err.Error())
+	}
+	dirsToMake := []string{
+		dir.ContentDir,
+		dir.StaticDir,
+		dir.LayoutsDir,
+		dir.TemplatesDir,
+		dir.NavigationDir,
+	}
+	for _, dir := range dirsToMake {
+		err = os.Mkdir(dir, 0755)
+		if err != nil {
+			return syserr.New(syserr.Here(), "unanticipated error when creating %s", dir)
+		}
+	}
+	config := NewConfig(dir.ConfigPath)
+	serr := config.Create()
+	if serr != nil {
+		return serr
+	}
+	return nil
 }
