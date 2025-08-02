@@ -28,8 +28,13 @@ func (e Err) Print() {
 	fmt.Fprintf(os.Stderr, "🚨 %s:%d — %s\n", e.File, e.Line, e.Message)
 }
 
+func (e Err) Fail() {
+	fmt.Fprintf(os.Stderr, "🚨 %s:%d — %s\n", e.File, e.Line, e.Message)
+	os.Exit(1)
+}
+
 func (e Err) Error() string {
-	return fmt.Sprintf("perr.Err [%s:%d] code=%d: %s", e.File, e.Line, e.Message)
+	return fmt.Sprintf("perr.Err [%s:%d] %s", e.File, e.Line, e.Message)
 }
 
 type Location struct {

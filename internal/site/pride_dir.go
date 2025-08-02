@@ -34,21 +34,18 @@ func NewPrideDir(path string) (PrideDir, *syserr.Err) {
 }
 
 func (dir PrideDir) CreateIfNotExists() *syserr.Err {
-	err := os.Mkdir(dir.RootDir, 0755)
-	if err != nil {
-		return syserr.New(syserr.Here(), "%s", err.Error())
-	}
 	dirsToMake := []string{
+		dir.RootDir,
 		dir.ContentDir,
 		dir.StaticDir,
 		dir.LayoutsDir,
 		dir.TemplatesDir,
 		dir.NavigationDir,
 	}
-	for _, dir := range dirsToMake {
-		err = os.Mkdir(dir, 0755)
+	for _, d := range dirsToMake {
+		err := os.MkdirAll(d, 0755)
 		if err != nil {
-			return syserr.New(syserr.Here(), "unanticipated error when creating %s", dir)
+			return syserr.New(syserr.Here(), "failed to create directory %s: %s", d, err.Error())
 		}
 	}
 	config := NewConfig(dir.ConfigPath)
@@ -58,3 +55,4 @@ func (dir PrideDir) CreateIfNotExists() *syserr.Err {
 	}
 	return nil
 }
+

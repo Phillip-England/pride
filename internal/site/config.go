@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -13,7 +12,7 @@ import (
 
 type Config struct {
 	SiteName      string
-	Dir           string
+	Root           string
 	Path          string
 	RelativePath  string
 	Text          string
@@ -21,16 +20,13 @@ type Config struct {
 	Version       string
 	Server        string
 	Theme         string
-	ContentDir    string
-	TemplatesDir  string
-	NavigationDir string
 }
 
 func NewConfig(path string) Config {
 	var config Config
 	config.Path = path
-	config.Dir = strings.TrimSuffix(path, "/pride.toml")
-	config.SiteName = filepath.Base(config.Dir)
+	config.Root = filepath.Dir(path)
+	config.SiteName = filepath.Base(config.Root)
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
@@ -46,10 +42,10 @@ func LoadConfig() (Config, *syserr.Err) {
 	foundConfig := false
 	dir, err := os.Getwd()
 	if err != nil {
-		return config, syserr.New(syserr.Here(), err.Error())
+		return config, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	for {
-		configPath := dir + "/pride.toml"
+		configPath := filepath.Join(dir, "/pride.toml")
 		file, err := os.ReadFile(configPath)
 		if err != nil {
 			parent := filepath.Dir(dir)
@@ -62,19 +58,16 @@ func LoadConfig() (Config, *syserr.Err) {
 		config.Text = string(file)
 		config.Path = configPath
 		if _, err := toml.DecodeFile(config.Path, &config); err != nil {
-			return config, syserr.New(syserr.Here(), err.Error())
+			return config, syserr.New(syserr.Here(), "%s", err.Error())
 		}
 		foundConfig = true
-		config.Dir = dir
-		config.SiteName = filepath.Base(config.Dir)
+		config.Root = dir
+		config.SiteName = filepath.Base(config.Root)
 		break
 	}
 	if !foundConfig {
-		return config, syserr.New(syserr.Here(), err.Error())
+		return config, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	config.ContentDir = config.Dir + "/content"
-	config.TemplatesDir = config.Dir + "/templates"
-	config.NavigationDir = config.Dir + "/navigation"
 	return config, nil
 }
 
