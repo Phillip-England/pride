@@ -66,7 +66,7 @@ func BuildNavigation() (string, *syserr.Err) {
 		s = s.RemoveAttr("nav-name")
 		s.RemoveClass("pride-inner-nav")
 		innerNav := fmt.Sprintf("<nav class='pride-nav' nav-name='%s'>%s</nav>", navName, outerHtml)
-		filePath := config.NavigationDir + "/" + navName + ".html"
+		filePath := "./navigation" + "/" + navName + ".html"
 		err = os.WriteFile(filePath, []byte(innerNav), 0755)
 		if err != nil {
 			potErr = syserr.New(syserr.Here(), err.Error())
@@ -80,7 +80,7 @@ func BuildNavigation() (string, *syserr.Err) {
 	if err != nil {
 		return "", syserr.New(syserr.Here(), err.Error())
 	}
-	err = os.WriteFile(config.NavigationDir+"/default.html", []byte(finalHtml), 0755)
+	err = os.WriteFile("./navigation"+"/default.html", []byte(finalHtml), 0755)
 	if err != nil {
 		return "", syserr.New(syserr.Here(), err.Error())
 	}
@@ -90,7 +90,7 @@ func BuildNavigation() (string, *syserr.Err) {
 func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 	var nav string
 	var navName string
-	parts := strings.Split(config.ContentDir, config.SiteName)
+	parts := strings.Split("./content", config.SiteName)
 	if len(parts) > 1 {
 		navName = parts[1]
 	}
@@ -105,13 +105,13 @@ func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 	} else {
 		nav = fmt.Sprintf(`<li class='pride-inner-nav' nav-name='%s'>%s<ul>`, navName, navName)
 	}
-	entries, err := os.ReadDir(config.ContentDir)
+	entries, err := os.ReadDir("./content")
 	if err != nil {
 		return "", syserr.New(syserr.Here(), err.Error())
 	}
 	mdFiles := []*site.MarkdownFile{}
 	for _, entry := range entries {
-		path := filepath.Join(config.ContentDir, entry.Name())
+		path := filepath.Join("./content", entry.Name())
 		if entry.IsDir() {
 			innerNav, err := build(config, false)
 			if err != nil {
@@ -119,7 +119,7 @@ func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 			}
 			nav += innerNav
 		} else {
-			mdFile, serr := site.MarkdownFileLoad(path, "content", config.Theme, config.Dir)
+			mdFile, serr := site.MarkdownFileLoad(path, "content", config.Theme, "./")
 			if serr != nil {
 				return "", serr
 			}

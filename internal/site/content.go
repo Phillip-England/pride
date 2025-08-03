@@ -65,9 +65,9 @@ func (f Content) Create() *syserr.Err {
 	return nil
 }
 
-func GetContentPaths(config Config) ([]string, *syserr.Err) {
+func GetContentPaths(contentDir string) ([]string, *syserr.Err) {
 	paths := []string{}
-	err := filepath.WalkDir(config.ContentDir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(contentDir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			return nil
 		}
@@ -188,21 +188,16 @@ func ContentLoadAll() ([]*MarkdownFile, *syserr.Err) {
 	if serr != nil {
 		return content, serr
 	}
-	paths, serr := GetContentPaths(config)
+	paths, serr := GetContentPaths("./content")
 	if serr != nil {
 		return content, serr
 	}
 	for _, path := range paths {
-		mdFile, serr := MarkdownFileLoad(path, "content", config.Theme, config.TemplatesDir)
+		mdFile, serr := MarkdownFileLoad(path, "content", config.Theme, "./templates")
 		if serr != nil {
 			return content, serr
 		}
 		content = append(content, mdFile)
 	}
 	return content, nil
-}
-
-type ContentDir struct {
-	Path    string
-	MdFiles []MarkdownFile
 }

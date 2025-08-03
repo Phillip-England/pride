@@ -10,20 +10,20 @@ import (
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-type Config struct {
-	SiteName      string
-	Root           string
-	Path          string
-	RelativePath  string
-	Text          string
-	Dob           string
-	Version       string
-	Server        string
-	Theme         string
+type ConfigFile struct {
+	SiteName     string
+	Root         string
+	Path         string
+	RelativePath string
+	Text         string
+	Dob          string
+	Version      string
+	Server       string
+	Theme        string
 }
 
-func NewConfig(path string) Config {
-	var config Config
+func NewConfigFile(path string) (ConfigFile, *syserr.Err) {
+	var config ConfigFile
 	config.Path = path
 	config.Root = filepath.Dir(path)
 	config.SiteName = filepath.Base(config.Root)
@@ -31,21 +31,35 @@ func NewConfig(path string) Config {
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
 	config.Theme = "dracula"
+
 	config.Text = fmt.Sprintf(`version = "%s"
 dob = "%s"
-server = "%s"`, config.Version, config.Dob, config.Server)
-	return config
+server = "%s"
+theme = "%s"`, config.Version, config.Dob, config.Server, config.Theme)
+
+	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		return config, syserr.New(syserr.Here(), "%s", err.Error())
+	}
+	defer file.Close()
+
+	_, err = file.Write([]byte(config.Text))
+	if err != nil {
+		return config, syserr.New(syserr.Here(), "%s", err.Error())
+	}
+
+	return config, nil
 }
 
-func LoadConfig() (Config, *syserr.Err) {
-	var config Config
+func LoadConfigFile() (ConfigFile, *syserr.Err) {
+	var config ConfigFile
 	foundConfig := false
 	dir, err := os.Getwd()
 	if err != nil {
 		return config, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	for {
-		configPath := filepath.Join(dir, "/pride.toml")
+		configPath := filepath.Join(dir, "pride.toml")
 		file, err := os.ReadFile(configPath)
 		if err != nil {
 			parent := filepath.Dir(dir)
@@ -71,15 +85,15 @@ func LoadConfig() (Config, *syserr.Err) {
 	return config, nil
 }
 
-func (config Config) Create() *syserr.Err {
+func (config ConfigFile) Create() *syserr.Err {
 	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		return syserr.New(syserr.Here(), err.Error())
+		return syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	defer file.Close()
 	_, err = file.Write([]byte(config.Text))
 	if err != nil {
-		return syserr.New(syserr.Here(), err.Error())
+		return syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	return nil
 }
