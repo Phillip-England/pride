@@ -11,7 +11,7 @@ type CssFile struct {
 	Text string
 }
 
-func NewCssFile(path string, text string) (CssFile, *syserr.Err) {
+func CreateCssFile(path string, text string) (CssFile, *syserr.Err) {
 	var cssFile CssFile
 	file, err := os.Create(path)
 	if err != nil {

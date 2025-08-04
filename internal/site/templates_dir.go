@@ -8,18 +8,18 @@ import (
 )
 
 type TemplatesDir struct {
-	Path string
+	Path          string
 	TemplateFiles []TemplateFile
 }
 
-func NewTemplatesDir(path string) (TemplatesDir, *syserr.Err) {
+func CreateTemplatesDir(path string) (TemplatesDir, *syserr.Err) {
 	var dir TemplatesDir
 	dir.Path = path
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	defaultTemplate, serr := NewTemplateFile(filepath.Join(path, "default.html"), `{{ define "header" }}
+	defaultTemplate, serr := CreateTemplateFile(filepath.Join(path, "default.html"), `{{ define "header" }}
 	<header>
 		<h1>{{ .Pride.Ctx.Title }}</h1>
 	</header>

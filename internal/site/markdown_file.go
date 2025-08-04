@@ -2,6 +2,7 @@ package site
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,19 @@ import (
 	"github.com/yuin/goldmark/text"
 	"go.abhg.dev/goldmark/frontmatter"
 )
+
+func GetDefaultMarkdownText() string {
+	return fmt.Sprintf(`+++
+title = "Home Page"
+dob = "%s"
+draft = %t
+template = "/templates/default.html"
++++
+
+# A Header
+Some Content
+`, time.Now().UTC().Format(time.RFC3339), true)
+}
 
 type MarkdownFile struct {
 	Path            string
@@ -32,7 +46,7 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func NewMarkdownFile(path string, text string, configFile ConfigFile) (MarkdownFile, *syserr.Err) {
+func CreateMarkdownFile(path string, text string, configFile ConfigFile, prideDirPath string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	file, err := os.Create(path)
 	if err != nil {
@@ -40,7 +54,7 @@ func NewMarkdownFile(path string, text string, configFile ConfigFile) (MarkdownF
 	}
 	defer file.Close()
 	file.WriteString(text)
-	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, configFile.Root)
+	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath)
 	if serr != nil {
 		return mdFile, serr
 	}
@@ -83,7 +97,7 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string) (MarkdownF
 	var buf bytes.Buffer
 	context := parser.NewContext()
 	if err := md.Convert(mdBytes, &buf, parser.WithContext(context)); err != nil {
-		return mdFile, syserr.New(syserr.Here(), err.Error())
+		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	mdFile.Html = buf.String()
 	mdFile.FileName = filepath.Base(mdFile.Path)

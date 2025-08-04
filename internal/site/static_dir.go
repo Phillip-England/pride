@@ -8,18 +8,18 @@ import (
 )
 
 type StaticDir struct {
-	Path string
+	Path     string
 	CssFiles []CssFile
 }
 
-func NewStaticDir(path string) (StaticDir, *syserr.Err) {
+func CreateStaticDir(path string) (StaticDir, *syserr.Err) {
 	var dir StaticDir
 	dir.Path = path
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	defaultCssFile, serr := NewCssFile(filepath.Join(path, "default.css"), `* {
+	defaultCssFile, serr := CreateCssFile(filepath.Join(path, "default.css"), `* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;

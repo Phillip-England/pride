@@ -1,20 +1,18 @@
 package site
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
 type ContentDir struct {
-	Path string
+	Path          string
 	MarkdownFiles []MarkdownFile
 }
 
-func NewContentDir(path string, configFile ConfigFile) (ContentDir, *syserr.Err) {
+func CreateContentDir(path string, configFile ConfigFile, prideDirPath string) (ContentDir, *syserr.Err) {
 	var dir ContentDir
 	dir.Path = path
 	dir.MarkdownFiles = []MarkdownFile{}
@@ -22,16 +20,7 @@ func NewContentDir(path string, configFile ConfigFile) (ContentDir, *syserr.Err)
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	indexMdFile, serr := NewMarkdownFile(filepath.Join(path, "index.md"), fmt.Sprintf(`+++
-title = "Home Page"
-dob = "%s"
-draft = %t
-template = "/templates/default.html"
-+++
-
-# Welcome
-This is the home page!
-`, time.Now().UTC().Format(time.RFC3339), true), configFile)
+	indexMdFile, serr := CreateMarkdownFile(filepath.Join(path, "index.md"), GetDefaultMarkdownText(), configFile, prideDirPath)
 	if serr != nil {
 		return dir, serr
 	}

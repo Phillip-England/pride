@@ -7,11 +7,11 @@ import (
 )
 
 type TemplateFile struct {
-	Path            string
+	Path string
 	Text string
 }
 
-func NewTemplateFile(path string, text string) (TemplateFile, *syserr.Err) {
+func CreateTemplateFile(path string, text string) (TemplateFile, *syserr.Err) {
 	var templateFile TemplateFile
 	file, err := os.Create(path)
 	if err != nil {

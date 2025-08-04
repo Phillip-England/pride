@@ -11,7 +11,6 @@ import (
 )
 
 type ConfigFile struct {
-	Root         string
 	Path         string
 	RelativePath string
 	Text         string
@@ -21,10 +20,9 @@ type ConfigFile struct {
 	Theme        string
 }
 
-func NewConfigFile(path string) (ConfigFile, *syserr.Err) {
+func CreateConfigFile(path string) (ConfigFile, *syserr.Err) {
 	var config ConfigFile
 	config.Path = path
-	config.Root = filepath.Dir(path)
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
@@ -56,8 +54,10 @@ func LoadConfigFile() (ConfigFile, *syserr.Err) {
 	if err != nil {
 		return config, syserr.New(syserr.Here(), "%s", err.Error())
 	}
+	checkedPaths := []string{}
 	for {
 		configPath := filepath.Join(dir, "pride.toml")
+		checkedPaths = append(checkedPaths, configPath)
 		file, err := os.ReadFile(configPath)
 		if err != nil {
 			parent := filepath.Dir(dir)
@@ -73,12 +73,12 @@ func LoadConfigFile() (ConfigFile, *syserr.Err) {
 			return config, syserr.New(syserr.Here(), "%s", err.Error())
 		}
 		foundConfig = true
-		config.Root = dir
 		break
 	}
 	if !foundConfig {
-		return config, syserr.New(syserr.Here(), "%s", err.Error())
+		return config, syserr.New(syserr.Here(), "failed to locate pride.toml at any of the following locations:\n %v", checkedPaths)
 	}
+
 	return config, nil
 }
 

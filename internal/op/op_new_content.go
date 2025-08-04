@@ -1,7 +1,6 @@
 package op
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,18 +19,17 @@ type OpNewContent struct {
 func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
 	cmdMake, ok := c.(*cmd.CmdNew)
 	if !ok {
-		return syserr.New(syserr.Here(), "type assertion failure, did you use pointers correctly? did you return a valid op code?")
+		return syserr.New(syserr.Here(), "type assertion failure")
 	}
-	contentPath := "./content/" + cmdMake.ArgDestinationStripped
-	fmt.Printf("🧬 making new content at %s.md\n", contentPath)
-	_, serr := site.LoadConfigFile()
+	prideDir, serr := site.LoadPrideDir()
 	if serr != nil {
 		return serr
 	}
+	contentPath := "./content/" + cmdMake.ArgDestinationStripped
 	contentDirPath := "./content"
 	_, err := os.Stat(contentDirPath)
 	if err != nil {
-		return syserr.New(syserr.Here(), err.Error())
+		return syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	fileName := filepath.Base(cmdMake.ArgDestination)
 	fileName = strings.TrimSuffix(fileName, ".md")
@@ -42,8 +40,19 @@ func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
 		parts[i] = string(runes)
 	}
 	title := strings.Join(parts, " ")
-	f := site.ContentNew(contentPath+".md", title, true)
-	serr = f.Create()
+	_, serr = site.CreateMarkdownFile(contentPath+".md", title, prideDir.ConfigFile, prideDir.Path)
+	if serr != nil {
+		return serr
+	}
+	return nil
+}
+
+func OperationNewContent(destination string) *syserr.Err {
+	dir, serr := site.LoadPrideDir()
+	if serr != nil {
+		return serr
+	}
+	_, serr = site.CreateMarkdownFile(destination, site.GetDefaultMarkdownText(), dir.ConfigFile, dir.Path)
 	if serr != nil {
 		return serr
 	}

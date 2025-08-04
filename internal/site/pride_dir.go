@@ -8,16 +8,16 @@ import (
 )
 
 type PrideDir struct {
-	Path       string
+	Path          string
 	ContentDir    ContentDir
 	ConfigFile    ConfigFile
-	StaticDir    StaticDir
+	StaticDir     StaticDir
 	TemplatesDir  TemplatesDir
 	NavigationDir NavigationDir
-	LayoutsDir   LayoutsDir
+	LayoutsDir    LayoutsDir
 }
 
-func NewPrideDir(path string) (PrideDir, *syserr.Err) {
+func CreatePrideDir(path string) (PrideDir, *syserr.Err) {
 	var dir PrideDir
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
@@ -26,9 +26,9 @@ func NewPrideDir(path string) (PrideDir, *syserr.Err) {
 	dir.Path = absolutePath
 	err = os.MkdirAll(dir.Path, 0755)
 	if err != nil {
-		syserr. New(syserr.Here(), "%s", err.Error())
+		syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	configFile, serr := NewConfigFile(filepath.Join(absolutePath, "pride.toml"))
+	configFile, serr := CreateConfigFile(filepath.Join(absolutePath, "pride.toml"))
 	if serr != nil {
 		return dir, serr
 	}
@@ -49,42 +49,43 @@ func NewPrideDir(path string) (PrideDir, *syserr.Err) {
 	// 4. content dir (depends on templates)
 	// 5. navigation dir (depends on content)
 
-	templatesDir, serr := NewTemplatesDir(filepath.Join(absolutePath, "templates"))
-	if serr != nil {
-		return dir, serr
-	}
-	dir.TemplatesDir = templatesDir
-
-
-	staticDir, serr := NewStaticDir(filepath.Join(absolutePath, "static"))
+	// 1
+	staticDir, serr := CreateStaticDir(filepath.Join(absolutePath, "static"))
 	if serr != nil {
 		return dir, serr
 	}
 	dir.StaticDir = staticDir
 
-	navigationDir, serr := NewNavigationDir(filepath.Join(absolutePath, "navigation"))
+	// 2
+	templatesDir, serr := CreateTemplatesDir(filepath.Join(absolutePath, "templates"))
 	if serr != nil {
 		return dir, serr
 	}
-	dir.NavigationDir = navigationDir
+	dir.TemplatesDir = templatesDir
 
-	layoutsDir, serr := NewLayoutsDir(filepath.Join(absolutePath, "layouts"))
+	// 3
+	layoutsDir, serr := CreateLayoutsDir(filepath.Join(absolutePath, "layouts"))
 	if serr != nil {
 		return dir, serr
 	}
 	dir.LayoutsDir = layoutsDir
 
-
-	// create this dir last because it will be dependant on other dirs and their files
-	contentDir, serr := NewContentDir(contentDirPath, configFile)
+	// 4
+	contentDir, serr := CreateContentDir(contentDirPath, configFile, dir.Path)
 	if serr != nil {
 		return dir, serr
 	}
 	dir.ContentDir = contentDir
 
+	// 5
+	navigationDir, serr := CreateNavigationDir(filepath.Join(absolutePath, "navigation"))
+	if serr != nil {
+		return dir, serr
+	}
+	dir.NavigationDir = navigationDir
+
 	return dir, nil
 }
-
 
 func LoadPrideDir() (PrideDir, *syserr.Err) {
 	var dir PrideDir
