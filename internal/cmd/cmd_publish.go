@@ -7,7 +7,7 @@ import (
 
 type CmdPublish struct {
 	ArgContentPath string
-	Config         site.Config
+	Config         site.ConfigFile
 	MdFile         *site.MarkdownFile
 }
 
@@ -17,7 +17,7 @@ func NewCmdPublish() (*CmdPublish, *syserr.Err) {
 	if !exists {
 		return cmd, syserr.New(syserr.Here(), "%s is not a valid file path", argContentPath)
 	}
-	config, serr := site.LoadConfig()
+	config, serr := site.LoadConfigFile()
 	if serr != nil {
 		return cmd, serr
 	}

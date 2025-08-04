@@ -11,3 +11,9 @@ func NewLayoutsDir(path string) (LayoutsDir, *syserr.Err) {
 	dir.Path = path
 	return dir, nil
 }
+
+func LoadLayoutsDir(path string) (LayoutsDir, *syserr.Err) {
+	var dir LayoutsDir
+	dir.Path = path
+	return dir, nil
+}

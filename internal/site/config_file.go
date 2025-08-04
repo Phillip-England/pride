@@ -11,7 +11,6 @@ import (
 )
 
 type ConfigFile struct {
-	SiteName     string
 	Root         string
 	Path         string
 	RelativePath string
@@ -26,7 +25,6 @@ func NewConfigFile(path string) (ConfigFile, *syserr.Err) {
 	var config ConfigFile
 	config.Path = path
 	config.Root = filepath.Dir(path)
-	config.SiteName = filepath.Base(config.Root)
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
@@ -76,7 +74,6 @@ func LoadConfigFile() (ConfigFile, *syserr.Err) {
 		}
 		foundConfig = true
 		config.Root = dir
-		config.SiteName = filepath.Base(config.Root)
 		break
 	}
 	if !foundConfig {

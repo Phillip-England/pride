@@ -75,23 +75,3 @@ func GetContentPaths(contentDir string) ([]string, *syserr.Err) {
 	sort.Strings(paths)
 	return paths, nil
 }
-
-func ContentLoadAll() ([]*MarkdownFile, *syserr.Err) {
-	content := []*MarkdownFile{}
-	config, serr := LoadConfigFile()
-	if serr != nil {
-		return content, serr
-	}
-	paths, serr := GetContentPaths("./content")
-	if serr != nil {
-		return content, serr
-	}
-	for _, path := range paths {
-		mdFile, serr := MarkdownFileLoad(path, "content", config.Theme, "./templates")
-		if serr != nil {
-			return content, serr
-		}
-		content = append(content, mdFile)
-	}
-	return content, nil
-}

@@ -36,7 +36,7 @@ func (op *OpBuildNav) Exec(c cmd.Cmd) *syserr.Err {
 
 func BuildNavigation() (string, *syserr.Err) {
 	fmt.Printf("🧬 building site navigation\n")
-	config, serr := site.LoadConfig()
+	config, serr := site.LoadConfigFile()
 	if serr != nil {
 		return "", serr
 	}
@@ -46,7 +46,7 @@ func BuildNavigation() (string, *syserr.Err) {
 	}
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(nav))
 	if err != nil {
-		return "", syserr.New(syserr.Here(), err.Error())
+		return "", syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	doc.Find(".pride-inner-nav").Each(func(i int, s *goquery.Selection) {
 		if s.Find("a").Length() == 0 {
@@ -59,7 +59,7 @@ func BuildNavigation() (string, *syserr.Err) {
 		inner := s.Children().First()
 		outerHtml, err := goquery.OuterHtml(inner)
 		if err != nil {
-			potErr = syserr.New(syserr.Here(), err.Error())
+			potErr = syserr.New(syserr.Here(), "%s", err.Error())
 			return
 		}
 		navName, _ := s.Attr("nav-name")
@@ -69,7 +69,7 @@ func BuildNavigation() (string, *syserr.Err) {
 		filePath := "./navigation" + "/" + navName + ".html"
 		err = os.WriteFile(filePath, []byte(innerNav), 0755)
 		if err != nil {
-			potErr = syserr.New(syserr.Here(), err.Error())
+			potErr = syserr.New(syserr.Here(), "%s", err.Error())
 		}
 
 	})
@@ -78,22 +78,18 @@ func BuildNavigation() (string, *syserr.Err) {
 	}
 	finalHtml, err := doc.Html()
 	if err != nil {
-		return "", syserr.New(syserr.Here(), err.Error())
+		return "", syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	err = os.WriteFile("./navigation"+"/default.html", []byte(finalHtml), 0755)
 	if err != nil {
-		return "", syserr.New(syserr.Here(), err.Error())
+		return "", syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	return nav, nil
 }
 
-func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
+func build(config site.ConfigFile, isFirstPass bool) (string, *syserr.Err) {
 	var nav string
 	var navName string
-	parts := strings.Split("./content", config.SiteName)
-	if len(parts) > 1 {
-		navName = parts[1]
-	}
 	navName = strings.ReplaceAll(navName, "/", "-")
 	navName = strings.Replace(navName, "content-", "", 1)
 	if strings.HasPrefix(navName, ".-") {
@@ -107,9 +103,9 @@ func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 	}
 	entries, err := os.ReadDir("./content")
 	if err != nil {
-		return "", syserr.New(syserr.Here(), err.Error())
+		return "", syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	mdFiles := []*site.MarkdownFile{}
+	mdFiles := []site.MarkdownFile{}
 	for _, entry := range entries {
 		path := filepath.Join("./content", entry.Name())
 		if entry.IsDir() {
@@ -119,7 +115,7 @@ func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 			}
 			nav += innerNav
 		} else {
-			mdFile, serr := site.MarkdownFileLoad(path, "content", config.Theme, "./")
+			mdFile, serr := site.LoadMarkdownFile(path, config.Theme, "./")
 			if serr != nil {
 				return "", serr
 			}
@@ -132,11 +128,11 @@ func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 			prevMdFile := mdFiles[len(mdFiles)-1]
 			prevDob, err := time.Parse(time.RFC3339, prevMdFile.Dob)
 			if err != nil {
-				return "", syserr.New(syserr.Here(), err.Error())
+				return "", syserr.New(syserr.Here(), "%s", err.Error())
 			}
 			currentDob, err := time.Parse(time.RFC3339, mdFile.Dob)
 			if err != nil {
-				return "", syserr.New(syserr.Here(), err.Error())
+				return "", syserr.New(syserr.Here(), "%s", err.Error())
 			}
 			if prevDob.Before(currentDob) {
 				if !mdFile.IsDraft {
@@ -144,7 +140,7 @@ func build(config site.Config, isFirstPass bool) (string, *syserr.Err) {
 				}
 			} else {
 				if !mdFile.IsDraft {
-					mdFiles = append([]*site.MarkdownFile{mdFile}, mdFiles...)
+					mdFiles = append([]site.MarkdownFile{mdFile}, mdFiles...)
 				}
 			}
 		}

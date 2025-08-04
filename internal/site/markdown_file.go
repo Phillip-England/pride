@@ -32,11 +32,26 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir string) (*MarkdownFile, *syserr.Err) {
+func NewMarkdownFile(path string, text string, configFile ConfigFile) (MarkdownFile, *syserr.Err) {
+	var mdFile MarkdownFile
+	file, err := os.Create(path)
+	if err != nil {
+		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
+	}
+	defer file.Close()
+	file.WriteString(text)
+	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, configFile.Root)
+	if serr != nil {
+		return mdFile, serr
+	}
+	return loadedMdFile, nil
+}
+
+func LoadMarkdownFile(path string, theme string, prideRootDir string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
-		return &mdFile, syserr.New(syserr.Here(), "failed to read %s", path)
+		return mdFile, syserr.New(syserr.Here(), "failed to read %s", path)
 	}
 	mdFile.Text = string(mdBytes)
 	mdFile.Path = path
@@ -68,7 +83,7 @@ func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir st
 	var buf bytes.Buffer
 	context := parser.NewContext()
 	if err := md.Convert(mdBytes, &buf, parser.WithContext(context)); err != nil {
-		return &mdFile, syserr.New(syserr.Here(), err.Error())
+		return mdFile, syserr.New(syserr.Here(), err.Error())
 	}
 	mdFile.Html = buf.String()
 	mdFile.FileName = filepath.Base(mdFile.Path)
@@ -93,23 +108,14 @@ func MarkdownFileLoad(path string, serverPrefix string, theme string, rootDir st
 	mdFile.IsDraft = draft
 	template, ok := mdFile.Meta["template"].(string)
 	if !ok {
-		template = rootDir + "/templates/" + "default.html"
+		template = filepath.Join(prideRootDir, "templates", "default.html")
 	} else {
-		template = rootDir + template
+		template = filepath.Join(prideRootDir, template)
 	}
 	_, err = os.Stat(template)
 	if err != nil {
-		return &mdFile, syserr.New(syserr.Here(), `frontmatter 'template' value in %s pointed to a file which does not exist, please point the file towards a template found in ./templates`, path)
+		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	mdFile.Template = template
-	serverPath := strings.TrimPrefix(mdFile.Path, serverPrefix)
-	serverPath = strings.TrimSuffix(serverPath, ".md")
-	if serverPath == "/index" {
-		serverPath = "/"
-	}
-	if !strings.HasPrefix(serverPath, "/") {
-		serverPath = "/" + serverPath
-	}
-	mdFile.ServerPath = serverPath
-	return &mdFile, nil
+	return mdFile, nil
 }

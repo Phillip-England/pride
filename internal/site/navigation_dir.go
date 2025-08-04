@@ -11,3 +11,9 @@ func NewNavigationDir(path string) (NavigationDir, *syserr.Err) {
 	dir.Path = path
 	return dir, nil
 }
+
+func LoadNavigationDir(path string) (NavigationDir, *syserr.Err) {
+	var dir NavigationDir
+	dir.Path = path
+	return dir, nil
+}
