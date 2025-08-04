@@ -21,14 +21,10 @@ func clean() {
 func TestPrideDirCreationAndLoading(t *testing.T) {
 	clean()
 	testSitePath := testSitePath()
-	dir, serr := site.NewPrideDir(testSitePath)
+	_, serr := site.NewPrideDir(testSitePath)
 	if serr != nil {
 		serr.Fail()
 		return
-	}
-	serr = dir.CreateIfNotExists()
-	if serr != nil {
-		serr.Fail()
 	}
 	deepDir := filepath.Join(testSitePath, "content", "posts", "foo", "bar")
 	err := os.MkdirAll(deepDir, 0755)
