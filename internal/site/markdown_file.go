@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/Phillip-England/pride/internal/syserr"
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
@@ -17,6 +18,42 @@ import (
 	"github.com/yuin/goldmark/text"
 	"go.abhg.dev/goldmark/frontmatter"
 )
+
+var lowercaseWords = map[string]bool{
+	"a": true, "an": true, "the": true,
+	"and": true, "but": true, "or": true, "nor": true, "for": true, "so": true, "yet": true,
+	"at": true, "by": true, "down": true, "from": true, "in": true,
+	"into": true, "like": true, "near": true, "of": true, "off": true, "on": true,
+	"onto": true, "out": true, "over": true, "past": true, "per": true, "plus": true,
+	"than": true, "to": true, "up": true, "upon": true, "via": true, "with": true,
+	"as": true, "if": true, "that": true, "when": true, "while": true,
+}
+
+func capitalize(word string) string {
+	if word == "" {
+		return ""
+	}
+	runes := []rune(word)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+func TitleFromPath(path string) string {
+	base := filepath.Base(path)
+	name := strings.TrimSuffix(base, filepath.Ext(base))
+	words := strings.Split(name, "-")
+
+	for i, word := range words {
+		lower := strings.ToLower(word)
+		if i == 0 || i == len(words)-1 || !lowercaseWords[lower] {
+			words[i] = capitalize(lower)
+		} else {
+			words[i] = lower
+		}
+	}
+
+	return strings.Join(words, " ")
+}
 
 func GetDefaultMarkdownText() string {
 	return fmt.Sprintf(`+++
@@ -46,22 +83,41 @@ type MarkdownFile struct {
 	Template        string
 }
 
-func CreateMarkdownFile(path string, text string, configFile ConfigFile, prideDirPath string) (MarkdownFile, *syserr.Err) {
+func CreateMarkdownFile(path string, title string, isDraft bool, template string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
+	dir := filepath.Dir(path)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
+	}
 	file, err := os.Create(path)
 	if err != nil {
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	defer file.Close()
-	file.WriteString(text)
-	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath)
+
+	if title == "" {
+		title = TitleFromPath(path)
+	}
+
+	file.WriteString(fmt.Sprintf(`+++
+title = "%s"
+dob = "%s"
+draft = %t
+template = "%s"
++++
+
+# A Header
+Some Content
+`, title, time.Now().UTC().Format(time.RFC3339), isDraft, template))
+	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
 	if serr != nil {
 		return mdFile, serr
 	}
 	return loadedMdFile, nil
 }
 
-func LoadMarkdownFile(path string, theme string, prideRootDir string) (MarkdownFile, *syserr.Err) {
+func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDirPath string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
@@ -131,5 +187,34 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string) (MarkdownF
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	mdFile.Template = template
+
+	// resolving the server path is platform specific
+	trimmed := strings.ReplaceAll(path, prideRootDir, "")
+	if strings.Contains(trimmed, "/") {
+		// linux/macOS
+		parts := strings.Split(trimmed, "/")
+		parts = parts[2:]
+		joined := strings.Join(parts, "/")
+		joined = strings.TrimSuffix(joined, ".md")
+		joined = "/" + joined
+		if joined == "/index" {
+			joined = "/"
+		}
+		mdFile.ServerPath = joined
+	} else {
+		// windows
+		parts := strings.Split(trimmed, "\\")
+		if len(parts) > 2 {
+			parts = parts[2:]
+		}
+		joined := strings.Join(parts, "/")
+		joined = strings.TrimSuffix(joined, ".md")
+		joined = "/" + joined
+		if joined == "/index" {
+			joined = "/"
+		}
+		mdFile.ServerPath = joined
+	}
+
 	return mdFile, nil
 }

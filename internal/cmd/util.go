@@ -25,3 +25,12 @@ func ArgIsFilePath(position int) (string, bool) {
 	os.Remove(arg)
 	return arg, true
 }
+
+func HasFlag(flag string) bool {
+	for _, arg := range os.Args {
+		if arg == flag {
+			return true
+		}
+	}
+	return false
+}

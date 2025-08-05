@@ -2,42 +2,33 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
 type CmdNew struct {
-	ArgMakeType            string
-	ArgDestination         string
-	ArgDestinationStripped string
-	ContentType            contentType
+	ArgContentType string
+	ArgDestination string
+	ContentType    contentType
 }
 
 func NewCmdNew() (*CmdNew, *syserr.Err) {
 	cmd := &CmdNew{}
-	argMakeType, err := GetArg(2)
+	argContentType, err := GetArg(2)
 	if err != nil {
 		return cmd, syserr.New(syserr.Here(), "missing <CONTENT-TYPE> and <DESTINATION> in 'pride new'")
 	}
-	contentType, err := contentTypeNew(argMakeType)
+	contentType, err := contentTypeNew(argContentType)
 	if err != nil {
 		return cmd, syserr.New(syserr.Here(), "invalid <CONTENT-TYPE> passed to 'pride new'")
 	}
-	cmd.ArgMakeType = argMakeType
+	cmd.ArgContentType = argContentType
 	cmd.ContentType = contentType
 	argDestination, err := GetArg(3)
 	if err != nil {
 		return cmd, syserr.New(syserr.Here(), "missing <DESTINATION> in 'pride new'")
 	}
 	cmd.ArgDestination = argDestination
-	if strings.HasPrefix(cmd.ArgDestination, "./") {
-		cmd.ArgDestination = strings.Replace(cmd.ArgDestination, "./", "/", 1)
-	}
-	if !strings.HasPrefix(cmd.ArgDestination, "/") {
-		cmd.ArgDestination = "./" + cmd.ArgDestination
-	}
-	cmd.ArgDestinationStripped = strings.Replace(cmd.ArgDestination, "./", "", 1)
 	return cmd, nil
 }
 

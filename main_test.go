@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/Phillip-England/pride/internal/op"
 	"github.com/Phillip-England/pride/internal/site"
@@ -64,13 +65,50 @@ func TestCreatePrideDir(t *testing.T) {
 	}
 }
 
+// ensures new content can be generated
 func TestOperationNewContent(t *testing.T) {
+	startingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	dir := initTestSite()
 	contentPath := filepath.Join(dir.ContentDir.Path, "about.md")
-	serr := op.OperationNewContent(contentPath)
+	mdFile, serr := op.OperationNewContent(contentPath, true)
 	if serr != nil {
 		serr.Fail()
 		return
 	}
+	if mdFile.ServerPath != "/about" {
+		t.Fatalf("expected server path /about but got %s", mdFile.ServerPath)
+	}
+	if mdFile.Title != "About" {
+		t.Fatalf("expected title About but got %s", mdFile.Title)
+	}
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
 
+func TestBuildNavigation(t *testing.T) {
+	dir := initTestSite()
+	contentPaths := []string{
+		filepath.Join(dir.ContentDir.Path, "about.md"),
+		filepath.Join(dir.ContentDir.Path, "contact.md"),
+		filepath.Join(dir.ContentDir.Path, "/posts/1.md"),
+		filepath.Join(dir.ContentDir.Path, "/posts/2.md"),
+		filepath.Join(dir.ContentDir.Path, "/posts/3.md"),
+		filepath.Join(dir.ContentDir.Path, "/docs/1.md"),
+		filepath.Join(dir.ContentDir.Path, "/docs/2.md"),
+		filepath.Join(dir.ContentDir.Path, "/docs/3.md"),
+	}
+	for _, path := range contentPaths {
+		_, serr := op.OperationNewContent(path, true)
+		if serr != nil {
+			serr.Fail()
+			return
+		}
+	}
+	time.Sleep(1)
+	op.BuildNavigation()
 }

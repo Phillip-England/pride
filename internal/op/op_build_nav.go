@@ -35,12 +35,11 @@ func (op *OpBuildNav) Exec(c cmd.Cmd) *syserr.Err {
 }
 
 func BuildNavigation() (string, *syserr.Err) {
-	fmt.Printf("🧬 building site navigation\n")
-	config, serr := site.LoadConfigFile()
+	prideDir, serr := site.LoadPrideDir()
 	if serr != nil {
 		return "", serr
 	}
-	nav, serr := build(config, true)
+	nav, serr := build(prideDir.ConfigFile, true, prideDir.Path, prideDir.ContentDir.Path)
 	if serr != nil {
 		return "", serr
 	}
@@ -87,9 +86,32 @@ func BuildNavigation() (string, *syserr.Err) {
 	return nav, nil
 }
 
-func build(config site.ConfigFile, isFirstPass bool) (string, *syserr.Err) {
+func build(config site.ConfigFile, isFirstPass bool, prideDirPath string, currentDir string) (string, *syserr.Err) {
 	var nav string
 	var navName string
+	pathDiff := strings.Replace(currentDir, prideDirPath, "", 1)
+
+	// platform specific operation
+	if strings.Contains(pathDiff, "/") {
+		// linux/mac
+		parts := strings.Split(pathDiff, "/")
+		parts = parts[1:]
+		if len(parts) == 1 {
+			navName = "default"
+		} else {
+			navName = strings.Join(parts, "-")
+		}
+	} else {
+		// windows
+		parts := strings.Split(pathDiff, "\\")
+		parts = parts[1:]
+		if len(parts) == 1 {
+			navName = "default"
+		} else {
+			navName = strings.Join(parts, "-")
+		}
+	}
+
 	navName = strings.ReplaceAll(navName, "/", "-")
 	navName = strings.Replace(navName, "content-", "", 1)
 	if strings.HasPrefix(navName, ".-") {
@@ -101,21 +123,22 @@ func build(config site.ConfigFile, isFirstPass bool) (string, *syserr.Err) {
 	} else {
 		nav = fmt.Sprintf(`<li class='pride-inner-nav' nav-name='%s'>%s<ul>`, navName, navName)
 	}
-	entries, err := os.ReadDir("./content")
+	entries, err := os.ReadDir(currentDir)
 	if err != nil {
 		return "", syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	mdFiles := []site.MarkdownFile{}
 	for _, entry := range entries {
-		path := filepath.Join("./content", entry.Name())
+		path := filepath.Join(currentDir, entry.Name())
 		if entry.IsDir() {
-			innerNav, err := build(config, false)
+			subDirPath := filepath.Join(currentDir, entry.Name())
+			innerNav, err := build(config, false, prideDirPath, subDirPath)
 			if err != nil {
 				return "", err
 			}
 			nav += innerNav
 		} else {
-			mdFile, serr := site.LoadMarkdownFile(path, config.Theme, "./")
+			mdFile, serr := site.LoadMarkdownFile(path, config.Theme, prideDirPath, currentDir)
 			if serr != nil {
 				return "", serr
 			}
@@ -150,7 +173,7 @@ func build(config site.ConfigFile, isFirstPass bool) (string, *syserr.Err) {
 		nav += navItem
 	}
 	if isFirstPass {
-		nav += "</nav></ul>"
+		nav += "</ul></nav>"
 	} else {
 		nav += "</ul></li>"
 	}
