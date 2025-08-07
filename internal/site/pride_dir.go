@@ -8,13 +8,12 @@ import (
 )
 
 type PrideDir struct {
-	Path          string
-	ContentDir    ContentDir
-	ConfigFile    ConfigFile
-	StaticDir     StaticDir
-	TemplatesDir  TemplatesDir
-	NavigationDir NavigationDir
-	LayoutsDir    LayoutsDir
+	Path         string
+	ContentDir   ContentDir
+	ConfigFile   ConfigFile
+	StaticDir    StaticDir
+	TemplatesDir TemplatesDir
+	LayoutsDir   LayoutsDir
 }
 
 func CreatePrideDir(path string) (PrideDir, *syserr.Err) {
@@ -47,7 +46,6 @@ func CreatePrideDir(path string) (PrideDir, *syserr.Err) {
 	// 2. templates dir (no dependancies)
 	// 3. layouts dir (depends on templates)
 	// 4. content dir (depends on templates)
-	// 5. navigation dir (depends on content)
 
 	// 1
 	staticDir, serr := CreateStaticDir(filepath.Join(absolutePath, "static"))
@@ -77,13 +75,6 @@ func CreatePrideDir(path string) (PrideDir, *syserr.Err) {
 	}
 	dir.ContentDir = contentDir
 
-	// 5
-	navigationDir, serr := CreateNavigationDir(filepath.Join(absolutePath, "navigation"))
-	if serr != nil {
-		return dir, serr
-	}
-	dir.NavigationDir = navigationDir
-
 	return dir, nil
 }
 
@@ -103,11 +94,6 @@ func LoadPrideDir() (PrideDir, *syserr.Err) {
 		return dir, serr
 	}
 	dir.ContentDir = contentDir
-	navigationDir, serr := LoadNavigationDir(filepath.Join(dir.Path, "navigation"))
-	if serr != nil {
-		return dir, serr
-	}
-	dir.NavigationDir = navigationDir
 	templatesDir, serr := LoadTemplatesDir(filepath.Join(dir.Path, "templates"))
 	if serr != nil {
 		return dir, serr

@@ -17,10 +17,6 @@ func OpNew(code int) (Op, *syserr.Err) {
 		return &OpNewSite{Code: code}, nil
 	case 2:
 		return &OpNewContent{Code: code}, nil
-	case 3:
-		return &OpBuildNav{Code: code}, nil
-	case 4:
-		return &OpPublish{Code: code}, nil
 	default:
 		return nil, syserr.New(syserr.Here(), "provided an invalid code to OpNew in ./internal/op/op.go")
 	}

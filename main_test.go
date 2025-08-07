@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/Phillip-England/pride/internal/op"
 	"github.com/Phillip-England/pride/internal/site"
@@ -20,16 +19,17 @@ func clean() {
 	_ = os.RemoveAll(testSitePath())
 }
 
-func initTestSite() site.PrideDir {
+func initBlankTestSite() site.PrideDir {
 	clean()
 	dir, _ := site.CreatePrideDir(testSitePath())
 	_ = os.Chdir(dir.Path)
 	return dir
 }
 
-// ensures the pride dir can be created and accessed
-// tests to see if the pride dir can be loaded from any subdirectory
-// within the pride dir
+// 1. ensures pride dir can be generated
+// 2. ensures pride dir cannot be overwritten
+// 3. ensures pride commands can be executed deep within the pride dir
+// 4. ensures commands cannot be executed outside of a pride dir
 func TestCreatePrideDir(t *testing.T) {
 	clean()
 	startingDir, err := os.Getwd()
@@ -37,11 +37,19 @@ func TestCreatePrideDir(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	testSitePath := testSitePath()
+	// 1
 	_, serr := site.CreatePrideDir(testSitePath)
 	if serr != nil {
 		serr.Fail()
 		return
 	}
+	// 2
+	_, serr = site.CreatePrideDir(testSitePath)
+	if serr == nil {
+		t.Fatal("pride dir was able to be overwritten, which is invalid behaviour")
+		return
+	}
+	// 3
 	deepDir := filepath.Join(testSitePath, "content", "posts", "foo", "bar")
 	err = os.MkdirAll(deepDir, 0755)
 	if err != nil {
@@ -63,37 +71,66 @@ func TestCreatePrideDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+	// 4
+	prideDir, serr = site.LoadPrideDir()
+	if serr == nil {
+		t.Fatal("was able to execute a pride command outside of a pride dir, which is invalid behaviour")
+		return
+	}
 }
 
-// ensures new content can be generated
+// 1. ensures new content can be generated
+// 2. ensures new content is generated with the expected server path
+// 3. ensures new content is generated with the expected title
+// 4. ensures content with complex, hyphenated names can be generated
+// 5. ensures content with complex, hyphenated names is generated with the expected server path
+// 6. ensures content with complex, hyphenated names is generated with the expected title
+// 7. ensures existing content cannot be overwritten
+// 8. ensures we can create content in bulk without any glaring issues
 func TestOperationNewContent(t *testing.T) {
 	startingDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	dir := initTestSite()
+	dir := initBlankTestSite()
 	contentPath := filepath.Join(dir.ContentDir.Path, "about.md")
+	// 1
 	mdFile, serr := op.OperationNewContent(contentPath, true)
 	if serr != nil {
 		serr.Fail()
 		return
 	}
+	// 2
 	if mdFile.ServerPath != "/about" {
-		t.Fatalf("expected server path /about but got %s", mdFile.ServerPath)
+		t.Fatalf("expected server path '/about' but got '%s'", mdFile.ServerPath)
 	}
+	// 3
 	if mdFile.Title != "About" {
-		t.Fatalf("expected title About but got %s", mdFile.Title)
+		t.Fatalf("expected title 'About' but got '%s'", mdFile.Title)
 	}
-	err = os.Chdir(startingDir)
-	if err != nil {
-		t.Fatal(err.Error())
+	// 4
+	complexContentPath := filepath.Join(dir.ContentDir.Path, "some-difficult-name-that-might-resolve-weird.md")
+	complexMdFile, serr := op.OperationNewContent(complexContentPath, true)
+	if serr != nil {
+		serr.Fail()
+		return
 	}
-}
-
-func TestBuildNavigation(t *testing.T) {
-	dir := initTestSite()
+	// 5
+	if complexMdFile.ServerPath != "/some-difficult-name-that-might-resolve-weird" {
+		t.Fatalf("expected server path '/some-difficult-name-that-might-resolve-weird' but got '%s'", complexMdFile.ServerPath)
+	}
+	// 6
+	if complexMdFile.Title != "Some Difficult Name that Might Resolve Weird" {
+		t.Fatalf("expected title 'Some Difficult Name that Might Resolve Weird' but got '%s'", complexMdFile.Title)
+	}
+	// 7
+	mdFile, serr = op.OperationNewContent(contentPath, true)
+	if serr == nil {
+		t.Fatal("was able to overwrite content which already exists, which is invalid behaviour")
+		return
+	}
+	// 8
 	contentPaths := []string{
-		filepath.Join(dir.ContentDir.Path, "about.md"),
 		filepath.Join(dir.ContentDir.Path, "contact.md"),
 		filepath.Join(dir.ContentDir.Path, "/posts/1.md"),
 		filepath.Join(dir.ContentDir.Path, "/posts/2.md"),
@@ -109,6 +146,8 @@ func TestBuildNavigation(t *testing.T) {
 			return
 		}
 	}
-	time.Sleep(1)
-	op.BuildNavigation()
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 }

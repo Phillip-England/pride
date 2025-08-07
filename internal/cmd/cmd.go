@@ -17,18 +17,6 @@ func Extract() (Cmd, *syserr.Err) {
 			return nil, err
 		}
 		return cmd, nil
-	case FlagBuild:
-		cmd, err := NewCmdBuild()
-		if err != nil {
-			return nil, err
-		}
-		return cmd, nil
-	case FlagPublish:
-		cmd, err := NewCmdPublish()
-		if err != nil {
-			return nil, err
-		}
-		return cmd, nil
 	default:
 		cmd, err := NewCmdHelp()
 		if err != nil {

@@ -7,8 +7,6 @@ type CmdId int
 const (
 	FlagHelp CmdId = iota
 	FlagNewNew
-	FlagBuild
-	FlagPublish
 )
 
 func NewCmdId() CmdId {
@@ -20,10 +18,6 @@ func NewCmdId() CmdId {
 	switch firstArg {
 	case "new":
 		return FlagNewNew
-	case "build":
-		return FlagBuild
-	case "publish":
-		return FlagPublish
 	default:
 		return FlagHelp
 	}

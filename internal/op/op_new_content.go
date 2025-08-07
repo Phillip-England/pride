@@ -18,8 +18,7 @@ func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure")
 	}
-	isDraft := !cmd.HasFlag("-f")
-	_, serr := OperationNewContent(cmdNew.ArgDestination, isDraft)
+	_, serr := OperationNewContent(cmdNew.ArgDestination, true)
 	if serr != nil {
 		return serr
 	}
