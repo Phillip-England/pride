@@ -89,7 +89,7 @@ func LoadPrideDir() (PrideDir, *syserr.Err) {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	dir.Path = absolutePath
-	contentDir, serr := LoadContentDir(filepath.Join(dir.Path, "content"))
+	contentDir, serr := LoadContentDir(filepath.Join(dir.Path, "content"), config.Theme, absolutePath)
 	if serr != nil {
 		return dir, serr
 	}

@@ -1,6 +1,7 @@
 package site
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -28,9 +29,32 @@ func CreateContentDir(path string, configFile ConfigFile, prideDirPath string) (
 	return dir, nil
 }
 
-func LoadContentDir(path string) (ContentDir, *syserr.Err) {
+func LoadContentDir(path string, theme string, prideDirPath string) (ContentDir, *syserr.Err) {
 	var dir ContentDir
 	dir.Path = path
-	dir.MarkdownFiles = []MarkdownFile{}
+	var potErr *syserr.Err
+	mdFiles := []MarkdownFile{}
+	err := filepath.Walk(dir.Path, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		ext := filepath.Ext(path)
+		if ext != ".md" {
+			return nil
+		}
+		mdFile, serr := LoadMarkdownFile(path, theme, prideDirPath, dir.Path)
+		if serr != nil {
+			potErr = serr
+		}
+		mdFiles = append(mdFiles, mdFile)
+		return nil
+	})
+	if err != nil {
+		return dir, syserr.New(syserr.Here(), "%s", err.Error())
+	}
+	if potErr != nil {
+		return dir, potErr
+	}
+	dir.MarkdownFiles = mdFiles
 	return dir, nil
 }

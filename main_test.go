@@ -26,6 +26,26 @@ func initBlankTestSite() site.PrideDir {
 	return dir
 }
 
+func initFullTestSite() site.PrideDir {
+	clean()
+	dir, _ := site.CreatePrideDir(testSitePath())
+	_ = os.Chdir(dir.Path)
+	contentPaths := []string{
+		filepath.Join(dir.ContentDir.Path, "contact.md"),
+		filepath.Join(dir.ContentDir.Path, "/posts/a-good-post.md"),
+		filepath.Join(dir.ContentDir.Path, "/posts/a-funny-post.md"),
+		filepath.Join(dir.ContentDir.Path, "/posts/that-post.md"),
+		filepath.Join(dir.ContentDir.Path, "/docs/these-docs.md"),
+		filepath.Join(dir.ContentDir.Path, "/docs/those-docs.md"),
+		filepath.Join(dir.ContentDir.Path, "/docs/them-docs.md"),
+	}
+	for _, path := range contentPaths {
+		_, _ = op.OperationNewContent(path, true)
+	}
+	prideDir, _ := site.LoadPrideDir()
+	return prideDir
+}
+
 // 1. ensures pride dir can be generated
 // 2. ensures pride dir cannot be overwritten
 // 3. ensures pride commands can be executed deep within the pride dir
@@ -149,5 +169,26 @@ func TestOperationNewContent(t *testing.T) {
 	err = os.Chdir(startingDir)
 	if err != nil {
 		t.Fatal(err.Error())
+	}
+}
+
+
+// 1. content is loaded in initFullTestSite()
+// 2. ensuring we have 8 .md files
+func TestLoadContent(t *testing.T) {
+	startingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	// 1
+	prideDir := initFullTestSite()
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	// 2
+	mdFiles := prideDir.ContentDir.MarkdownFiles
+	if len(mdFiles) != 8 {
+		t.Fatalf(`expected 8 .md files but found %d`, len(mdFiles))
 	}
 }
