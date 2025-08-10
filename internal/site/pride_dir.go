@@ -14,6 +14,7 @@ type PrideDir struct {
 	StaticDir    StaticDir
 	TemplatesDir TemplatesDir
 	LayoutsDir   LayoutsDir
+	Navigation   Navigation
 }
 
 func CreatePrideDir(path string) (PrideDir, *syserr.Err) {
@@ -109,5 +110,10 @@ func LoadPrideDir() (PrideDir, *syserr.Err) {
 		return dir, serr
 	}
 	dir.StaticDir = staticDir
+	nav, serr := LoadNavigation(dir.ContentDir)
+	if serr != nil {
+		return dir, serr
+	}
+	dir.Navigation = nav
 	return dir, nil
 }

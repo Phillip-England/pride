@@ -172,7 +172,6 @@ func TestOperationNewContent(t *testing.T) {
 	}
 }
 
-
 // 1. content is loaded in initFullTestSite()
 // 2. ensuring we have 8 .md files
 func TestLoadContent(t *testing.T) {
@@ -190,5 +189,23 @@ func TestLoadContent(t *testing.T) {
 	mdFiles := prideDir.ContentDir.MarkdownFiles
 	if len(mdFiles) != 8 {
 		t.Fatalf(`expected 8 .md files but found %d`, len(mdFiles))
+	}
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+// 1. navigation is loaded in initFullTestSite()
+func TestLoadNavigation(t *testing.T) {
+	startingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	// 1
+	_ = initFullTestSite()
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
 	}
 }
