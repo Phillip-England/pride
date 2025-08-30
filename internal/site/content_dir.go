@@ -21,7 +21,7 @@ func CreateContentDir(path string, configFile ConfigFile, prideDirPath string) (
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	indexMdFile, serr := CreateMarkdownFile(filepath.Join(path, "index.md"), "Home Page", true, "/templates/default.html", configFile, prideDirPath, dir.Path)
+	indexMdFile, serr := CreateMarkdownFile(filepath.Join(path, "index.md"), "Home Page", true, []string{}, "/templates/default.html", configFile, prideDirPath, dir.Path)
 	if serr != nil {
 		return dir, serr
 	}

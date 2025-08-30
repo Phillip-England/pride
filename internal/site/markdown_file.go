@@ -81,9 +81,10 @@ type MarkdownFile struct {
 	Dob             string
 	IsDraft         bool
 	Template        string
+	Menus           []string
 }
 
-func CreateMarkdownFile(path string, title string, isDraft bool, template string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
+func CreateMarkdownFile(path string, title string, isDraft bool, menuNames []string, template string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	dir := filepath.Dir(path)
 	err := os.MkdirAll(dir, 0755)
@@ -95,24 +96,35 @@ func CreateMarkdownFile(path string, title string, isDraft bool, template string
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	defer file.Close()
-
 	if title == "" {
 		title = TitleFromPath(path)
 	}
-
-	file.WriteString(fmt.Sprintf(`+++
+	menuNameStr := "["
+	for i, menuName := range menuNames {
+		menuNameStr += "\""
+		menuNameStr += menuName
+		menuNameStr += "\""
+		if i == len(menuNames)-1 {
+			continue
+		}
+		menuNameStr += ", "
+	}
+	menuNameStr += "]"
+	markdownContent := fmt.Sprintf(`+++
 title = "%s"
 dob = "%s"
 draft = %t
 template = "%s"
+menus = %s
 +++
 
 # A Header
 Some Content
-`, title, time.Now().UTC().Format(time.RFC3339), isDraft, template))
+`, title, time.Now().UTC().Format(time.RFC3339), isDraft, template, menuNameStr)
+	file.WriteString(markdownContent)
 	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
 	if serr != nil {
-		return mdFile, serr
+		return loadedMdFile, serr
 	}
 	return loadedMdFile, nil
 }
@@ -187,7 +199,11 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	mdFile.Template = template
-
+	menus, ok := mdFile.Meta["menus"].([]string)
+	if !ok {
+		menus = []string{}
+	}
+	mdFile.Menus = menus
 	// resolving the server path is platform specific
 	trimmed := strings.ReplaceAll(path, prideRootDir, "")
 	if strings.Contains(trimmed, "/") {

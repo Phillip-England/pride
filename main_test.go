@@ -40,7 +40,7 @@ func initFullTestSite() site.PrideDir {
 		filepath.Join(dir.ContentDir.Path, "/docs/them-docs.md"),
 	}
 	for _, path := range contentPaths {
-		_, _ = op.OperationNewContent(path, true)
+		_, _ = op.OperationNewContent(path, true, []string{"main"})
 	}
 	prideDir, _ := site.LoadPrideDir()
 	return prideDir
@@ -115,7 +115,7 @@ func TestOperationNewContent(t *testing.T) {
 	dir := initBlankTestSite()
 	contentPath := filepath.Join(dir.ContentDir.Path, "about.md")
 	// 1
-	mdFile, serr := op.OperationNewContent(contentPath, true)
+	mdFile, serr := op.OperationNewContent(contentPath, true, []string{"main"})
 	if serr != nil {
 		serr.Fail()
 		return
@@ -130,7 +130,7 @@ func TestOperationNewContent(t *testing.T) {
 	}
 	// 4
 	complexContentPath := filepath.Join(dir.ContentDir.Path, "some-difficult-name-that-might-resolve-weird.md")
-	complexMdFile, serr := op.OperationNewContent(complexContentPath, true)
+	complexMdFile, serr := op.OperationNewContent(complexContentPath, true, []string{"main"})
 	if serr != nil {
 		serr.Fail()
 		return
@@ -144,7 +144,7 @@ func TestOperationNewContent(t *testing.T) {
 		t.Fatalf("expected title 'Some Difficult Name that Might Resolve Weird' but got '%s'", complexMdFile.Title)
 	}
 	// 7
-	mdFile, serr = op.OperationNewContent(contentPath, true)
+	mdFile, serr = op.OperationNewContent(contentPath, true, []string{"main"})
 	if serr == nil {
 		t.Fatal("was able to overwrite content which already exists, which is invalid behaviour")
 		return
@@ -160,7 +160,7 @@ func TestOperationNewContent(t *testing.T) {
 		filepath.Join(dir.ContentDir.Path, "/docs/3.md"),
 	}
 	for _, path := range contentPaths {
-		_, serr := op.OperationNewContent(path, true)
+		_, serr := op.OperationNewContent(path, true, []string{"main"})
 		if serr != nil {
 			serr.Fail()
 			return
