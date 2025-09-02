@@ -26,7 +26,7 @@ func initBlankTestSite() site.PrideDir {
 	return dir
 }
 
-func initFullTestSite() site.PrideDir {
+func initTestProject() site.PrideDir {
 	clean()
 	dir, _ := site.CreatePrideDir(testSitePath())
 	_ = os.Chdir(dir.Path)
@@ -38,6 +38,7 @@ func initFullTestSite() site.PrideDir {
 		filepath.Join(dir.ContentDir.Path, "/docs/these-docs.md"),
 		filepath.Join(dir.ContentDir.Path, "/docs/those-docs.md"),
 		filepath.Join(dir.ContentDir.Path, "/docs/them-docs.md"),
+		filepath.Join(dir.ContentDir.Path, "/inner/deep/dark/lonely.md"),
 	}
 	for _, path := range contentPaths {
 		_, _ = op.OperationNewContent(path, true, []string{"main"})
@@ -172,7 +173,7 @@ func TestOperationNewContent(t *testing.T) {
 	}
 }
 
-// 1. content is loaded in initFullTestSite()
+// 1. content is loaded in initTestProject()
 // 2. ensuring we have 8 .md files
 func TestLoadContent(t *testing.T) {
 	startingDir, err := os.Getwd()
@@ -180,15 +181,15 @@ func TestLoadContent(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	// 1
-	prideDir := initFullTestSite()
+	prideDir := initTestProject()
 	err = os.Chdir(startingDir)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	// 2
 	mdFiles := prideDir.ContentDir.MarkdownFiles
-	if len(mdFiles) != 8 {
-		t.Fatalf(`expected 8 .md files but found %d`, len(mdFiles))
+	if len(mdFiles) != 9 {
+		t.Fatalf(`expected 9 .md files but found %d`, len(mdFiles))
 	}
 	err = os.Chdir(startingDir)
 	if err != nil {
@@ -196,16 +197,21 @@ func TestLoadContent(t *testing.T) {
 	}
 }
 
-// 1. navigation is loaded in initFullTestSite()
+// 1. navigation is loaded in initTestProject()
 func TestLoadNavigation(t *testing.T) {
 	startingDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	// 1
-	_ = initFullTestSite()
+	site := initTestProject()
 	err = os.Chdir(startingDir)
 	if err != nil {
 		t.Fatal(err.Error())
+	}
+	//
+
+	for _, menu := range site.Navigation.Menus {
+		menu.Print()
 	}
 }
