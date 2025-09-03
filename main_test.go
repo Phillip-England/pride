@@ -198,20 +198,57 @@ func TestLoadContent(t *testing.T) {
 }
 
 // 1. navigation is loaded in initTestProject()
+// 2. ensure we have 4 menus
+// 3. ensure the menu names are as expected
+// 4. extract the top-level menu and check it's html
 func TestLoadNavigation(t *testing.T) {
 	startingDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	// 1
-	site := initTestProject()
+	app := initTestProject()
 	err = os.Chdir(startingDir)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	//
-
-	for _, menu := range site.Navigation.Menus {
-		menu.Print()
+	// 2
+	count := len(app.Navigation.Menus)
+	if count != 4 {
+		t.Fatalf("expected 4 menus in generated navigation, found %d", count)
+	}
+	// 3
+	foundIndex := false
+	foundDocs := false
+	foundInnerDeepDark := false
+	foundPosts := false
+	for _, menu := range app.Navigation.Menus {
+		if menu.Name == "Index" {
+			foundIndex = true
+		}
+		if menu.Name == "Docs" {
+			foundDocs = true
+		}
+		if menu.Name == "Posts" {
+			foundDocs = true
+		}
+		if menu.Name == "InnerDeepDark" {
+			foundDocs = true
+		}
+	}
+	if foundIndex == false && foundDocs == false && foundInnerDeepDark == false && foundPosts == false {
+		t.Fatal("did not find expected menu names in generated navigation")
+	}
+	// 4
+	var indexMenu site.Menu
+	for _, menu := range app.Navigation.Menus {
+		if menu.Name == "Index" {
+			indexMenu = menu
+		}
+	}
+	actualHtml := indexMenu.Html
+	targetHtml := `<nav><ul><li class="pride-nav-item"><a href="/contact">Contact</a></li><li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Docs"><span class="pride-nav-submenu-title" style="cursor:pointer;">Docs</span><ul class="pride-nav-submenu" style="display:none;"><li><a href="/docs/them-docs">Them Docs</a></li><li><a href="/docs/these-docs">These Docs</a></li><li><a href="/docs/those-docs">Those Docs</a></li></ul></li><li class="pride-nav-item"><a href="/">Home Page</a></li><li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="InnerDeepDark"><span class="pride-nav-submenu-title" style="cursor:pointer;">InnerDeepDark</span><ul class="pride-nav-submenu" style="display:none;"><li><a href="/inner/deep/dark/lonely">Lonely</a></li></ul></li><li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Posts"><span class="pride-nav-submenu-title" style="cursor:pointer;">Posts</span><ul class="pride-nav-submenu" style="display:none;"><li><a href="/posts/a-funny-post">A Funny Post</a></li><li><a href="/posts/a-good-post">A Good Post</a></li><li><a href="/posts/that-post">That Post</a></li></ul></li></ul></nav>`
+	if targetHtml != actualHtml {
+		t.Fatal("generated navigation did not output expected html")
 	}
 }

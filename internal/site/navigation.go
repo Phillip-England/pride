@@ -11,18 +11,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// here is something we can easily do with navigation
-// by default, all submenus are included in navigation
-// this may not be what a user wants
-// for example we may wish to use the praimry, root level navigation,
-// without including all of the blog posts
-// well, each navigation has a unique name based off it's path
-// so, uses can target that name and then 'remove'
-// an inner menu based off of it's name
-// we just have to work out how to specify removal
-// from the user's perspective
-// accessing the submenus is easy due to the naming convention
-
 type Navigation struct {
 	Menus map[string]Menu
 }
@@ -247,28 +235,28 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (Menu, *syser
 	menu.Html = navMenuHtml
 
 	// 11
-	menu.Html += `
-<script>
-  (() => {
-	let menus = document.querySelectorAll('.pride-nav-submenu')
-	let titles = document.querySelectorAll('.pride-nav-submenu-title')
-	for (let i = 0; i < titles.length; i++) {
-	let title = titles[i]
-	let menu  = menus[i]
-	title.addEventListener('click', () => {
-		let menuDisplay = menu.style.display
-		if (!menuDisplay || menuDisplay === '' || menuDisplay === 'none') {
-		// could replace this with a value provided in our config
-		menu.style.display = 'block' 
-		} else {
-		menu.style.display = 'none'
-		}
-	})
-	}
-  })()
-</script>
+	// 	menu.Html += `
+	// <script>
+	//   (() => {
+	// 	let menus = document.querySelectorAll('.pride-nav-submenu')
+	// 	let titles = document.querySelectorAll('.pride-nav-submenu-title')
+	// 	for (let i = 0; i < titles.length; i++) {
+	// 	let title = titles[i]
+	// 	let menu  = menus[i]
+	// 	title.addEventListener('click', () => {
+	// 		let menuDisplay = menu.style.display
+	// 		if (!menuDisplay || menuDisplay === '' || menuDisplay === 'none') {
+	// 		// could replace this with a value provided in our config
+	// 		menu.style.display = 'block'
+	// 		} else {
+	// 		menu.style.display = 'none'
+	// 		}
+	// 	})
+	// 	}
+	//   })()
+	// </script>
 
-`
+	// `
 
 	return menu, nil
 }
