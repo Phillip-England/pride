@@ -251,4 +251,27 @@ func TestLoadNavigation(t *testing.T) {
 	if targetHtml != actualHtml {
 		t.Fatal("generated navigation did not output expected html")
 	}
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+// 1. navigation is loaded in initTestProject()
+func TestEmitNavigation(t *testing.T) {
+	startingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	// 1
+	_ = initTestProject()
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = os.Chdir(startingDir)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 }

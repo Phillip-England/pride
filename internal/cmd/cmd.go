@@ -17,6 +17,12 @@ func Extract() (Cmd, *syserr.Err) {
 			return nil, err
 		}
 		return cmd, nil
+	case FlagEmit:
+		cmd, serr := NewCmdEmit()
+		if serr != nil {
+			return nil, serr
+		}
+		return cmd, nil
 	default:
 		cmd, err := NewCmdHelp()
 		if err != nil {
