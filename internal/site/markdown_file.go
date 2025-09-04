@@ -80,11 +80,11 @@ type MarkdownFile struct {
 	Title           string
 	Dob             string
 	IsDraft         bool
-	Template        string
+	LayoutPath      string
 	Menus           []string
 }
 
-func CreateMarkdownFile(path string, title string, isDraft bool, menuNames []string, template string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
+func CreateMarkdownFile(path string, title string, isDraft bool, menuNames []string, layoutPath string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	dir := filepath.Dir(path)
 	err := os.MkdirAll(dir, 0755)
@@ -114,13 +114,13 @@ func CreateMarkdownFile(path string, title string, isDraft bool, menuNames []str
 title = "%s"
 dob = "%s"
 draft = %t
-template = "%s"
+layout = "%s"
 menus = %s
 +++
 
 # A Header
 Some Content
-`, title, time.Now().UTC().Format(time.RFC3339), isDraft, template, menuNameStr)
+`, title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath, menuNameStr)
 	file.WriteString(markdownContent)
 	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
 	if serr != nil {
@@ -188,17 +188,18 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 		draft = true
 	}
 	mdFile.IsDraft = draft
-	template, ok := mdFile.Meta["template"].(string)
+	layout, ok := mdFile.Meta["layout"].(string)
 	if !ok {
-		template = filepath.Join(prideRootDir, "templates", "default.html")
+		layout = filepath.Join(prideRootDir, "layouts", "default.html")
 	} else {
-		template = filepath.Join(prideRootDir, template)
+		layout = filepath.Join(prideRootDir, layout)
 	}
-	_, err = os.Stat(template)
-	if err != nil {
-		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
-	}
-	mdFile.Template = template
+	// force the layout to exist
+	// _, err = os.Stat(layout)
+	// if err != nil {
+	// 	return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
+	// }
+	mdFile.LayoutPath = layout
 	menus, ok := mdFile.Meta["menus"].([]string)
 	if !ok {
 		menus = []string{}

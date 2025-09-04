@@ -13,11 +13,16 @@ type OpHelp struct {
 }
 
 func (op *OpHelp) Exec(c cmd.Cmd) *syserr.Err {
-	fmt.Println(`🐍 pride - simple static sites
+	fmt.Println(`🐍 pride
+A dead-simple, hugo-inspired, static-site generator.
 
 [new]
-pride new <CONTENT_TYPE> <DESTINATION>
-pride new site new-site (scaffolds a new pride project)
-pride new content /index.md (generate new content for your site)`)
+- pride new site new-site
+- pride new content ./content/index.md
+[emit]
+- pride emit nav ./content ./nav.html
+- pride emit nav ./content/posts ./nav-posts.html
+[serve]
+- pride serve 8080`)
 	return nil
 }

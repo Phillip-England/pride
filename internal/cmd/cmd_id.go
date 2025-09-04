@@ -8,6 +8,7 @@ const (
 	FlagHelp CmdId = iota
 	FlagNewNew
 	FlagEmit
+	FlagServe
 )
 
 func NewCmdId() CmdId {
@@ -21,6 +22,8 @@ func NewCmdId() CmdId {
 		return FlagNewNew
 	case "emit":
 		return FlagEmit
+	case "serve":
+		return FlagServe
 	default:
 		return FlagHelp
 	}

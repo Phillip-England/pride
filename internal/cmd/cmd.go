@@ -23,6 +23,12 @@ func Extract() (Cmd, *syserr.Err) {
 			return nil, serr
 		}
 		return cmd, nil
+	case FlagServe:
+		cmd, serr := NewCmdServe()
+		if serr != nil {
+			return nil, serr
+		}
+		return cmd, nil
 	default:
 		cmd, err := NewCmdHelp()
 		if err != nil {

@@ -51,7 +51,7 @@ func OperationNewContent(destination string, isDraft bool, menuNames []string) (
 		menuName = menuNameFirstChar + string(menuNameRemainingRunes)
 		alteredMenuNames = append(alteredMenuNames, menuName)
 	}
-	mdFile, serr := site.CreateMarkdownFile(destination, "", isDraft, alteredMenuNames, "/templates/default.html", dir.ConfigFile, dir.Path, dir.ContentDir.Path)
+	mdFile, serr := site.CreateMarkdownFile(destination, "", isDraft, alteredMenuNames, "/layouts/default.html", dir.ConfigFile, dir.Path, dir.ContentDir.Path)
 	if serr != nil {
 		return mdFile, serr
 	}
