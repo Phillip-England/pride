@@ -240,14 +240,83 @@ func TestLoadNavigation(t *testing.T) {
 		t.Fatal("did not find expected menu names in generated navigation")
 	}
 	// 4
-	var indexMenu site.Menu
+	var indexMenu site.NavigationMenu
 	for _, menu := range app.Navigation.Menus {
 		if menu.Name == "Index" {
 			indexMenu = menu
 		}
 	}
 	actualHtml := indexMenu.Html
-	targetHtml := `<nav><ul><li class="pride-nav-item"><a href="/contact">Contact</a></li><li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Docs"><span class="pride-nav-submenu-title" style="cursor:pointer;">Docs</span><ul class="pride-nav-submenu" style="display:none;"><li><a href="/docs/them-docs">Them Docs</a></li><li><a href="/docs/these-docs">These Docs</a></li><li><a href="/docs/those-docs">Those Docs</a></li></ul></li><li class="pride-nav-item"><a href="/">Home Page</a></li><li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="InnerDeepDark"><span class="pride-nav-submenu-title" style="cursor:pointer;">InnerDeepDark</span><ul class="pride-nav-submenu" style="display:none;"><li><a href="/inner/deep/dark/lonely">Lonely</a></li></ul></li><li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Posts"><span class="pride-nav-submenu-title" style="cursor:pointer;">Posts</span><ul class="pride-nav-submenu" style="display:none;"><li><a href="/posts/a-funny-post">A Funny Post</a></li><li><a href="/posts/a-good-post">A Good Post</a></li><li><a href="/posts/that-post">That Post</a></li></ul></li></ul></nav>`
+	targetHtml := `<nav>
+  <ul>
+    <li class="pride-nav-item">
+      <a href="/contact">
+        Contact
+      </a>
+    </li>
+    <li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Docs">
+      <span class="pride-nav-submenu-title" style="cursor:pointer;">
+        Docs
+      </span>
+      <ul class="pride-nav-submenu" style="display:none;">
+        <li>
+          <a href="/docs/them-docs">
+            Them Docs
+          </a>
+        </li>
+        <li>
+          <a href="/docs/these-docs">
+            These Docs
+          </a>
+        </li>
+        <li>
+          <a href="/docs/those-docs">
+            Those Docs
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="pride-nav-item">
+      <a href="/">
+        Home Page
+      </a>
+    </li>
+    <li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="InnerDeepDark">
+      <span class="pride-nav-submenu-title" style="cursor:pointer;">
+        InnerDeepDark
+      </span>
+      <ul class="pride-nav-submenu" style="display:none;">
+        <li>
+          <a href="/inner/deep/dark/lonely">
+            Lonely
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Posts">
+      <span class="pride-nav-submenu-title" style="cursor:pointer;">
+        Posts
+      </span>
+      <ul class="pride-nav-submenu" style="display:none;">
+        <li>
+          <a href="/posts/a-funny-post">
+            A Funny Post
+          </a>
+        </li>
+        <li>
+          <a href="/posts/a-good-post">
+            A Good Post
+          </a>
+        </li>
+        <li>
+          <a href="/posts/that-post">
+            That Post
+          </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>`
 	if targetHtml != actualHtml {
 		t.Fatal("generated navigation did not output expected html")
 	}
@@ -257,19 +326,96 @@ func TestLoadNavigation(t *testing.T) {
 	}
 }
 
-// 1. navigation is loaded in initTestProject()
+// 1. initalize test project
+// 2. see if navigation is generated correctly
+// z. change back to original dir
 func TestEmitNavigation(t *testing.T) {
+	// 1
 	startingDir, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	// 1
-	_ = initTestProject()
-	err = os.Chdir(startingDir)
-	if err != nil {
-		t.Fatal(err.Error())
+	prideDir := initTestProject()
+	// 2
+	navMenuPath := prideDir.ContentDir.Path
+	navMenu, serr := op.OperationEmitNavigation(navMenuPath, prideDir.TemplatesDir.Path+"nav.html")
+	if serr != nil {
+		t.Fatal(serr.Err)
 	}
-
+	targetHtml := `<nav>
+  <ul>
+    <li class="pride-nav-item">
+      <a href="/contact">
+        Contact
+      </a>
+    </li>
+    <li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Docs">
+      <span class="pride-nav-submenu-title" style="cursor:pointer;">
+        Docs
+      </span>
+      <ul class="pride-nav-submenu" style="display:none;">
+        <li>
+          <a href="/docs/them-docs">
+            Them Docs
+          </a>
+        </li>
+        <li>
+          <a href="/docs/these-docs">
+            These Docs
+          </a>
+        </li>
+        <li>
+          <a href="/docs/those-docs">
+            Those Docs
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="pride-nav-item">
+      <a href="/">
+        Home Page
+      </a>
+    </li>
+    <li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="InnerDeepDark">
+      <span class="pride-nav-submenu-title" style="cursor:pointer;">
+        InnerDeepDark
+      </span>
+      <ul class="pride-nav-submenu" style="display:none;">
+        <li>
+          <a href="/inner/deep/dark/lonely">
+            Lonely
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="pride-nav-item pride-nav-submenu" data-pride-submenu-name="Posts">
+      <span class="pride-nav-submenu-title" style="cursor:pointer;">
+        Posts
+      </span>
+      <ul class="pride-nav-submenu" style="display:none;">
+        <li>
+          <a href="/posts/a-funny-post">
+            A Funny Post
+          </a>
+        </li>
+        <li>
+          <a href="/posts/a-good-post">
+            A Good Post
+          </a>
+        </li>
+        <li>
+          <a href="/posts/that-post">
+            That Post
+          </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>`
+	if navMenu.Html != targetHtml {
+		t.Fatal("generated navigation did not output expected html")
+	}
+	// z.
 	err = os.Chdir(startingDir)
 	if err != nil {
 		t.Fatal(err.Error())

@@ -1,7 +1,9 @@
 package site
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"path/filepath"
 	"slices"
@@ -9,13 +11,15 @@ import (
 
 	"github.com/Phillip-England/pride/internal/syserr"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/yosssi/gohtml"
+	"golang.org/x/net/html"
 )
 
 type Navigation struct {
-	Menus map[string]Menu
+	Menus map[string]NavigationMenu
 }
 
-func dirNameToMenuName(contentDir ContentDir, path string) (string, *syserr.Err) {
+func DirNameToMenuName(contentDir ContentDir, path string) (string, *syserr.Err) {
 	subDirName := strings.Replace(path, contentDir.Path, "", 1)
 	if subDirName == "" {
 		return "Index", nil
@@ -56,7 +60,7 @@ func dirNameToMenuName(contentDir ContentDir, path string) (string, *syserr.Err)
 
 func LoadNavigation(contentDir ContentDir) (Navigation, *syserr.Err) {
 	var nav Navigation
-	nav.Menus = make(map[string]Menu)
+	nav.Menus = make(map[string]NavigationMenu)
 	var potErr *syserr.Err
 
 	filepath.Walk(contentDir.Path, func(path string, info fs.FileInfo, err error) error {
@@ -64,7 +68,7 @@ func LoadNavigation(contentDir ContentDir) (Navigation, *syserr.Err) {
 			return nil
 		}
 
-		name, serr := dirNameToMenuName(contentDir, path)
+		name, serr := DirNameToMenuName(contentDir, path)
 		if serr != nil {
 			potErr = serr
 			return nil
@@ -98,7 +102,7 @@ func LoadNavigation(contentDir ContentDir) (Navigation, *syserr.Err) {
 	return nav, nil
 }
 
-type Menu struct {
+type NavigationMenu struct {
 	Name                string
 	Path                string
 	Html                string
@@ -118,8 +122,8 @@ type Menu struct {
 // 10. retrieve the sorted html
 // 11. add a <script> to enable sub-menu toggling on click
 
-func LoadMenu(name string, menuPath string, contentDir ContentDir) (Menu, *syserr.Err) {
-	var menu Menu
+func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMenu, *syserr.Err) {
+	var menu NavigationMenu
 	menu.Name = name
 	menu.Path = menuPath
 	menu.MarkdownParentDirs = []string{}
@@ -163,7 +167,7 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (Menu, *syser
 	menu.Html = "<nav><ul>"
 
 	for i, dir := range menu.MarkdownParentDirs {
-		menuName, serr := dirNameToMenuName(contentDir, dir)
+		menuName, serr := DirNameToMenuName(contentDir, dir)
 		if serr != nil {
 			return menu, serr
 		}
@@ -228,7 +232,7 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (Menu, *syser
 	}
 
 	// 10
-	navMenuHtml, err := goquery.OuterHtml(navMenu)
+	navMenuHtml, err := PrettyFromSelection(navMenu)
 	if err != nil {
 		return menu, syserr.New(syserr.Here(), "%s", err.Error())
 	}
@@ -261,7 +265,7 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (Menu, *syser
 	return menu, nil
 }
 
-func (m *Menu) printMarkdownFiles() {
+func (m *NavigationMenu) printMarkdownFiles() {
 	for _, dir := range m.MarkdownParentDirs {
 		fmt.Printf("Directory: %s\n", dir)
 
@@ -277,10 +281,100 @@ func (m *Menu) printMarkdownFiles() {
 	}
 }
 
-func (m *Menu) Print() {
+func (m *NavigationMenu) Print() {
 	fmt.Printf("Menu: %s\n", m.Name)
 	fmt.Printf("Path: %s\n", m.Path)
 	fmt.Println("Markdown Files:")
 	m.printMarkdownFiles()
 	fmt.Printf("Html: %s\n", m.Html)
+}
+
+// NormalizeHTML parses, normalizes, and pretty-prints a fragment (like your <nav>…</nav>)
+func NormalizeHTML(input string) (string, error) {
+	ctx := &html.Node{Type: html.ElementNode, Data: "div"}
+	nodes, err := html.ParseFragment(strings.NewReader(input), ctx)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	for i, n := range nodes {
+		if err := renderPretty(&buf, n, 0); err != nil {
+			return "", err
+		}
+		if i < len(nodes)-1 {
+			buf.WriteString("\n")
+		}
+	}
+	return strings.TrimSpace(buf.String()), nil
+}
+
+func renderPretty(w io.Writer, n *html.Node, depth int) error {
+	indent := strings.Repeat("  ", depth)
+
+	switch n.Type {
+	case html.DocumentNode:
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if err := renderPretty(w, c, depth); err != nil {
+				return err
+			}
+		}
+	case html.ElementNode:
+		fmt.Fprint(w, indent)
+		fmt.Fprint(w, "<", n.Data)
+		for _, a := range n.Attr {
+			fmt.Fprintf(w, ` %s="%s"`, a.Key, html.EscapeString(a.Val))
+		}
+		fmt.Fprint(w, ">")
+
+		if hasNonEmptyChild(n) {
+			fmt.Fprint(w, "\n")
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if err := renderPretty(w, c, depth+1); err != nil {
+					return err
+				}
+			}
+			fmt.Fprintf(w, "%s</%s>\n", indent, n.Data)
+		} else {
+			fmt.Fprintf(w, "</%s>\n", n.Data)
+		}
+	case html.TextNode:
+		text := strings.TrimSpace(n.Data)
+		if text != "" {
+			fmt.Fprintf(w, "%s%s\n", indent, text)
+		}
+	case html.CommentNode:
+		fmt.Fprintf(w, "%s<!--%s-->\n", indent, strings.TrimSpace(n.Data))
+	default:
+	}
+	return nil
+}
+
+func hasNonEmptyChild(n *html.Node) bool {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		switch c.Type {
+		case html.TextNode:
+			if strings.TrimSpace(c.Data) != "" {
+				return true
+			}
+		case html.ElementNode, html.CommentNode:
+			return true
+		}
+	}
+	return false
+}
+
+func PrettyFromSelection(sel *goquery.Selection) (string, error) {
+	if sel == nil || sel.Length() == 0 {
+		return "", nil
+	}
+	var raw strings.Builder
+	for _, n := range sel.Nodes {
+		var buf bytes.Buffer
+		if err := html.Render(&buf, n); err != nil {
+			return "", err
+		}
+		raw.WriteString(buf.String())
+	}
+	return gohtml.Format(raw.String()), nil
 }
