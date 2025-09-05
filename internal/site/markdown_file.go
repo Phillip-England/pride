@@ -74,7 +74,7 @@ type MarkdownFile struct {
 	Text            string
 	Theme           string
 	Html            string
-	Meta            map[string]any
+	Meta     map[string]any
 	FileName        string
 	PathWithoutBase string
 	Title           string
@@ -194,11 +194,6 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 	} else {
 		layout = filepath.Join(prideRootDir, layout)
 	}
-	// force the layout to exist
-	// _, err = os.Stat(layout)
-	// if err != nil {
-	// 	return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
-	// }
 	mdFile.LayoutPath = layout
 	menus, ok := mdFile.Meta["menus"].([]string)
 	if !ok {

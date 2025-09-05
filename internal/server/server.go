@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"net/http"
+	"strconv"
 
 	"github.com/Phillip-England/pride/internal/site"
 	"github.com/Phillip-England/pride/internal/syserr"
@@ -19,6 +20,7 @@ type Server struct {
 // 2. generate routes from .md files
 // 3. ensure static files can be served from static
 // 4. setup routes
+// 5. serving the routes
 func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 	var svr Server
 	svr.Port = port
@@ -40,25 +42,26 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 	}
 	// 3
 	fs := http.FileServer(http.Dir(prideDir.StaticDir.Path))
-	svr.Mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	svr.Mux.Handle("GET /static", http.StripPrefix("/static/", fs))
 	// 4
 	for _, route := range svr.Routes {
-
-		// NOTE: working on lining up meta data
-		// and extracting frontmatter from
-		// .md files / injecting it
-
 		svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
 			err := svr.Layouts.ExecuteTemplate(w, route.LayoutName, map[string]interface{}{
-				"Meta": map[string]interface{}{
-					"Title": route.Title,
-				},
+				"Meta": route.MarkdownFile.Meta,
 				"Content": route.MarkdownFile.Html,
 			})
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		})
+	}
+	// 5
+	portStr := strconv.Itoa(port)
+	host := "localhost"
+	addr := host + ":" + portStr
+	err = http.ListenAndServe(addr, svr.Mux)
+	if err != nil {
+		return svr, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	return svr, nil
 }
