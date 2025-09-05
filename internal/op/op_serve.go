@@ -27,22 +27,19 @@ func (op *OpServe) Exec(c cmd.Cmd) *syserr.Err {
 	return nil
 }
 
+// 1. load the project dir into memory
+// 2. create a new server
 func OperationStartServer(port int) *syserr.Err {
-	fmt.Printf("serving on port %d\n", port)
+	// 1
 	dir, serr := site.LoadPrideDir()
 	if serr != nil {
 		return serr
 	}
-	routes := []server.Route{}
-	for _, mdFile := range dir.ContentDir.MarkdownFiles {
-		route, serr := server.NewRoute(mdFile)
-		if serr != nil {
-			return serr
-		}
-		routes = append(routes, route)
+	// 2
+	svr, serr := server.NewServer(port, dir)
+	if serr != nil {
+		return serr
 	}
-	for _, route := range routes {
-		fmt.Println(route.Path)
-	}
+	fmt.Println(svr.Layouts)
 	return nil
 }
