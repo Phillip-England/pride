@@ -1,8 +1,6 @@
 package op
 
 import (
-	"fmt"
-
 	"github.com/Phillip-England/pride/internal/cmd"
 	"github.com/Phillip-England/pride/internal/server"
 	"github.com/Phillip-England/pride/internal/site"
@@ -36,10 +34,9 @@ func OperationStartServer(port int) *syserr.Err {
 		return serr
 	}
 	// 2
-	svr, serr := server.NewServer(port, dir)
+	_, serr = server.NewServer(port, dir)
 	if serr != nil {
 		return serr
 	}
-	fmt.Println(svr.Layouts)
 	return nil
 }

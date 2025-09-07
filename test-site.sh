@@ -15,6 +15,7 @@ sleep 2
 ./pride new content ./content/docs/1.md
 ./pride new content ./content/docs/2.md
 ./pride new content ./content/docs/3.md
+./pride new content ./content/deep/dark/deep_file.md
 ./pride emit nav ./content ./templates/nav.html
 ./pride emit nav ./content/posts ./templates/nav-posts.html
 ./pride emit nav ./content/docs ./templates/nav-docs.html

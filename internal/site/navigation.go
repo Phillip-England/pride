@@ -121,7 +121,7 @@ type NavigationMenu struct {
 // 9. go through each nav-item in sorted order, remove it, then re-add to end of list
 // 10. retrieve the sorted html
 // 11. add a <script> to enable sub-menu toggling on click
-
+// 12. wrap the nav in a valid go html {{ define }} clause
 func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMenu, *syserr.Err) {
 	var menu NavigationMenu
 	menu.Name = name
@@ -164,7 +164,7 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMe
 	}
 
 	// 4
-	menu.Html = "<nav><ul>"
+	menu.Html = "<nav class='pride-nav'><ul>"
 
 	for i, dir := range menu.MarkdownParentDirs {
 		menuName, serr := DirNameToMenuName(contentDir, dir)
@@ -186,7 +186,7 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMe
 		}
 
 		// 6
-		menu.Html += "<li class='pride-nav-item pride-nav-submenu' data-pride-submenu-name=" + menuName + ">"
+		menu.Html += "<li class='pride-nav-item' data-pride-submenu-name=" + menuName + ">"
 		menu.Html += "<span class='pride-nav-submenu-title' style='cursor:pointer;'>" + menuName + "</span>"
 		menu.Html += "<ul class='pride-nav-submenu' style='display:none;'>"
 		for _, mdFile := range mdFiles {
@@ -239,28 +239,40 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMe
 	menu.Html = navMenuHtml
 
 	// 11
-	// 	menu.Html += `
-	// <script>
-	//   (() => {
-	// 	let menus = document.querySelectorAll('.pride-nav-submenu')
-	// 	let titles = document.querySelectorAll('.pride-nav-submenu-title')
-	// 	for (let i = 0; i < titles.length; i++) {
-	// 	let title = titles[i]
-	// 	let menu  = menus[i]
-	// 	title.addEventListener('click', () => {
-	// 		let menuDisplay = menu.style.display
-	// 		if (!menuDisplay || menuDisplay === '' || menuDisplay === 'none') {
-	// 		// could replace this with a value provided in our config
-	// 		menu.style.display = 'block'
-	// 		} else {
-	// 		menu.style.display = 'none'
-	// 		}
-	// 	})
-	// 	}
-	//   })()
-	// </script>
+	menu.Html += `
+	<script>
+	  (() => {
+	   	let navMenus = document.querySelectorAll('.pride-nav')
+		for (let i = 0; i < navMenus.length; i++) {
+			let navMenu = navMenus[i]
+			if (navMenu.getAttribute('pride-complete') == 'true') {
+				continue
+			}
+			navMenu.setAttribute('pride-complete', 'true')
+			let menus = document.querySelectorAll('.pride-nav-submenu')
+			let titles = document.querySelectorAll('.pride-nav-submenu-title')
+			for (let i = 0; i < titles.length; i++) {
+			let title = titles[i]
+			let menu  = menus[i]
+			title.addEventListener('click', () => {
+				let menuDisplay = menu.style.display
+				if (!menuDisplay || menuDisplay === '' || menuDisplay === 'none') {
+				// could replace this with a value provided in our config
+				menu.style.display = 'block'
+				} else {
+				menu.style.display = 'none'
+				}
+			})
+			}
+		}
 
-	// `
+	  })()
+	</script>
+
+	`
+
+	// 12
+	menu.Html = "{{ define \"" + "Nav" + menu.Name + "\"}}" + menu.Html + "{{ end }}"
 
 	return menu, nil
 }

@@ -29,8 +29,8 @@ func CreateLayoutsDir(path string) (LayoutsDir, *syserr.Err) {
 	</head>
   	<body>
 		<div id='root'>
-			{{ template "header" . }}
-			{{ template "nav" . }}
+			{{ template "footer" . }}
+			{{ template "NavIndex" . }}
 			<main>{{ .Pride.Content }}</main>
 			{{ template "footer" . }}
 		</div>
