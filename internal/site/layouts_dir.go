@@ -25,13 +25,13 @@ func CreateLayoutsDir(path string) (LayoutsDir, *syserr.Err) {
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="/static/default.css">
-		<title>{{ .Pride.Ctx.Title }}</title>
+		<title>{{ .Meta.Title }}</title>
 	</head>
   	<body>
 		<div id='root'>
-			{{ template "footer" . }}
+			{{ template "header" . }}
 			{{ template "NavIndex" . }}
-			<main>{{ .Pride.Content }}</main>
+			<main>{{ .Content }}</main>
 			{{ template "footer" . }}
 		</div>
   	</body>

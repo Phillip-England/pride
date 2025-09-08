@@ -58,7 +58,7 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 		svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
 			err := svr.LayoutsAndTemplates.ExecuteTemplate(w, route.LayoutName, map[string]interface{}{
 				"Meta":    route.MarkdownFile.Meta,
-				"Content": route.MarkdownFile.Html,
+				"Content": template.HTML(route.MarkdownFile.Html),
 			})
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

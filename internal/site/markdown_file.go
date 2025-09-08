@@ -120,7 +120,7 @@ menus = %s
 
 # A Header
 Some Content
-`, title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath, menuNameStr)
+` + "```go\nfmt.Println(\"Hello, World!\")\n```", title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath, menuNameStr)
 	file.WriteString(markdownContent)
 	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
 	if serr != nil {
