@@ -9,6 +9,7 @@ const (
 	FlagNewNew
 	FlagEmit
 	FlagServe
+	FlagBuild
 )
 
 func NewCmdId() CmdId {
@@ -24,6 +25,8 @@ func NewCmdId() CmdId {
 		return FlagEmit
 	case "serve":
 		return FlagServe
+	case "build":
+		return FlagBuild
 	default:
 		return FlagHelp
 	}

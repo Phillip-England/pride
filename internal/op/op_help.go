@@ -16,13 +16,18 @@ func (op *OpHelp) Exec(c cmd.Cmd) *syserr.Err {
 	fmt.Println(`🐍 pride
 A dead-simple, hugo-inspired, static-site generator.
 
+Basic Usage Pattern:
+pride <PRIMARY COMMAND> <SUB COMMAND> <ARGS1> <ARGS2> <FLAGS>
+
 [new]
-- pride new site new-site
-- pride new content ./content/index.md
+  pride new site new-site
+  pride new content ./content/index.md
 [emit]
-- pride emit nav ./content ./nav.html
-- pride emit nav ./content/posts ./nav-posts.html
+  pride emit nav ./content ./nav.html
+  pride emit nav ./content/posts ./nav-posts.html
 [serve]
-- pride serve 8080`)
+  pride serve 8080
+[build]
+  pride build ./out`)
 	return nil
 }

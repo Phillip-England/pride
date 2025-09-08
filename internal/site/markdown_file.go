@@ -42,7 +42,6 @@ func TitleFromPath(path string) string {
 	base := filepath.Base(path)
 	name := strings.TrimSuffix(base, filepath.Ext(base))
 	words := strings.Split(name, "-")
-
 	for i, word := range words {
 		lower := strings.ToLower(word)
 		if i == 0 || i == len(words)-1 || !lowercaseWords[lower] {
@@ -51,7 +50,6 @@ func TitleFromPath(path string) string {
 			words[i] = lower
 		}
 	}
-
 	return strings.Join(words, " ")
 }
 
@@ -63,8 +61,8 @@ draft = %t
 template = "/templates/default.html"
 +++
 
-# A Header
-Some Content
+# A Bold Title
+Some lovely content.
 `, time.Now().UTC().Format(time.RFC3339), true)
 }
 

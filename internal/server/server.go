@@ -38,9 +38,6 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 	if serr != nil {
 		return svr, serr
 	}
-	for _, tmp := range tmpl.Templates() {
-		fmt.Println(tmp.Name())
-	}
 	svr.LayoutsAndTemplates = tmpl
 	svr.Routes = []Route{}
 	for _, mdFile := range prideDir.ContentDir.MarkdownFiles {
