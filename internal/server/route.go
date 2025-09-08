@@ -14,11 +14,13 @@ type Route struct {
 	LayoutPath   string
 	LayoutName   string
 	Title        string
+	RelativePath string
 }
 
 // 1. check if the .md file has a valid layout (one that exists)
 // 2. get the layout name
-func NewRoute(mdFile site.MarkdownFile) (Route, *syserr.Err) {
+// 3. get the relative path
+func NewRoute(prideDirPath string, mdFile site.MarkdownFile) (Route, *syserr.Err) {
 	var route Route
 	route.MarkdownFile = mdFile
 	route.Path = mdFile.ServerPath
@@ -31,5 +33,11 @@ func NewRoute(mdFile site.MarkdownFile) (Route, *syserr.Err) {
 	route.LayoutPath = mdFile.LayoutPath
 	// 2
 	route.LayoutName = filepath.Base(route.LayoutPath)
+	// 3.
+	relativePath, err := filepath.Rel(prideDirPath, mdFile.Path)
+	if err != nil {
+		return route, syserr.New(syserr.Here(), "%s", err.Error())
+	}
+	route.RelativePath = relativePath
 	return route, nil
 }

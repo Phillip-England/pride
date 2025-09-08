@@ -12,7 +12,11 @@ type OpBuild struct {
 }
 
 func (op *OpBuild) Exec(c cmd.Cmd) *syserr.Err {
-	serr := build.GenerateBuild()
+	cmdBuild, ok := c.(*cmd.CmdBuild)
+	if !ok {
+		return syserr.New(syserr.Here(), "type assertion failure")
+	}
+	serr := build.GenerateBuild(cmdBuild.ArgDest)
 	if serr != nil {
 		return serr
 	}

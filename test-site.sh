@@ -19,4 +19,5 @@ sleep 2
 ./pride emit nav ./content ./templates/nav.html
 ./pride emit nav ./content/posts ./templates/nav-posts.html
 ./pride emit nav ./content/docs ./templates/nav-docs.html
-./pride serve 8080
+# ./pride serve 8080
+./pride build ./out

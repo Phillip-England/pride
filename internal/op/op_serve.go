@@ -1,6 +1,8 @@
 package op
 
 import (
+	"net/http"
+
 	"github.com/Phillip-England/pride/internal/cmd"
 	"github.com/Phillip-England/pride/internal/server"
 	"github.com/Phillip-England/pride/internal/site"
@@ -34,9 +36,14 @@ func OperationStartServer(port int) *syserr.Err {
 		return serr
 	}
 	// 2
-	_, serr = server.NewServer(port, dir)
+	svr, serr := server.NewServer(port, dir)
 	if serr != nil {
 		return serr
+	}
+	//
+	err := http.ListenAndServe(svr.Addr, svr.Mux)
+	if err != nil {
+		return syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	return nil
 }
