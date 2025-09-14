@@ -43,7 +43,7 @@ func GenerateBuild(dest string) (*syserr.Err) {
 	}
 	// go through each route, generating an html file for each one
 	for _, route := range svr.Routes {
-		_, serr := NewHtmlFile(dest, route)
+		_, serr := NewHtmlFile(dest, route, prideDir.ConfigFile)
 		if serr != nil {
 			return serr
 		}

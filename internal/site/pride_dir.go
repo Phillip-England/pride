@@ -85,6 +85,7 @@ func LoadPrideDir() (PrideDir, *syserr.Err) {
 	if serr != nil {
 		return dir, serr
 	}
+	dir.ConfigFile = config
 	absolutePath, err := filepath.Abs(filepath.Dir(config.Path))
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
