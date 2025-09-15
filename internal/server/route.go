@@ -15,13 +15,14 @@ type Route struct {
 	LayoutName   string
 	Title        string
 	RelativePath string
+	HtmlBytes []byte
 }
 
 // 1. check if the .md file has a valid layout (one that exists)
 // 2. get the layout name
 // 3. get the relative path
-func NewRoute(prideDirPath string, mdFile site.MarkdownFile) (Route, *syserr.Err) {
-	var route Route
+func NewRoute(prideDirPath string, mdFile site.MarkdownFile) (*Route, *syserr.Err) {
+	route := &Route{}
 	route.MarkdownFile = mdFile
 	route.Path = mdFile.ServerPath
 	route.Title = mdFile.Title

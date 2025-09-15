@@ -2,6 +2,7 @@ package build
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -20,12 +21,23 @@ type HtmlFile struct {
 	Text string
 }
 
+func chopFirstDir(path string) string {
+	parts := strings.Split(filepath.ToSlash(path), "/")
+	if len(parts) <= 1 {
+		return path
+	}
+	return strings.Join(parts[1:], "/")
+}
 
-func NewHtmlFile(rootDir string, route server.Route, configFile site.ConfigFile) (HtmlFile, *syserr.Err) {
+
+func NewHtmlFile(rootDir string, route *server.Route, configFile site.ConfigFile, svr server.Server) (HtmlFile, *syserr.Err) {
 	var f HtmlFile
+	fmt.Println("================")
+	fmt.Println(string(route.HtmlBytes))
 	f.RootDir = rootDir
-	f.Path = filepath.Join(rootDir, route.RelativePath)
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(route.MarkdownFile.Html))
+	f.Path = filepath.Join(rootDir, strings.TrimSuffix(chopFirstDir(route.RelativePath), ".md") + ".html")
+	routeHtml := string(route.HtmlBytes)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(routeHtml))
 	if err != nil {
 		return f, syserr.New(syserr.Here(), "%s", err.Error())
 	}

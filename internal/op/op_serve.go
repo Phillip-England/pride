@@ -40,7 +40,7 @@ func OperationStartServer(port int) *syserr.Err {
 	if serr != nil {
 		return serr
 	}
-	//
+	// 3
 	err := http.ListenAndServe(svr.Addr, svr.Mux)
 	if err != nil {
 		return syserr.New(syserr.Here(), "%s", err.Error())

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -11,10 +12,11 @@ import (
 
 type Server struct {
 	LayoutsAndTemplates *template.Template
-	Routes              []Route
+	Routes              []*Route
 	Port                int
 	Mux                 *http.ServeMux
 	Addr string
+	Html string
 }
 
 
@@ -34,7 +36,7 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 		return svr, serr
 	}
 	svr.LayoutsAndTemplates = tmpl
-	svr.Routes = []Route{}
+	svr.Routes = []*Route{}
 	for _, mdFile := range prideDir.ContentDir.MarkdownFiles {
 		route, serr := NewRoute(prideDir.Path, mdFile)
 		if serr != nil {
@@ -47,16 +49,24 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 	svr.Mux.Handle("GET /static", http.StripPrefix("/static/", fs))
 	//
 	for _, route := range svr.Routes {
+		// load the template and resulting html
+		var buf bytes.Buffer
+		err := svr.LayoutsAndTemplates.ExecuteTemplate(&buf, route.LayoutName, map[string]interface{}{
+			"Meta":    route.MarkdownFile.Meta,
+			"Content": template.HTML(route.MarkdownFile.Html),
+		})
+		if err != nil {
+			return svr, syserr.New(syserr.Here(), "%s", err.Error())
+		}
+		route.HtmlBytes = buf.Bytes()
 		svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
-			err := svr.LayoutsAndTemplates.ExecuteTemplate(w, route.LayoutName, map[string]interface{}{
-				"Meta":    route.MarkdownFile.Meta,
-				"Content": template.HTML(route.MarkdownFile.Html),
-			})
+			_, err := w.Write(route.HtmlBytes)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		})
 	}
+
 	//
 	portStr := strconv.Itoa(port)
 	host := "localhost"
