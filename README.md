@@ -1,0 +1,2 @@
+# Pride
+Simple Static Sites

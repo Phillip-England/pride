@@ -19,6 +19,20 @@ import (
 	"go.abhg.dev/goldmark/frontmatter"
 )
 
+func normalizeMeta(meta map[string]any) map[string]any {
+    norm := make(map[string]any, len(meta))
+    for k, v := range meta {
+        norm[k] = v // keep original
+        if len(k) > 0 {
+            // make "title" into "Title"
+            upperKey := strings.ToUpper(k[:1]) + k[1:]
+            norm[upperKey] = v
+        }
+    }
+    return norm
+}
+
+
 var lowercaseWords = map[string]bool{
 	"a": true, "an": true, "the": true,
 	"and": true, "but": true, "or": true, "nor": true, "for": true, "so": true, "yet": true,
@@ -170,7 +184,7 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 	mdFile.PathWithoutBase = strings.ReplaceAll(mdFile.Path, mdFile.FileName, "")
 	root := md.Parser().Parse(text.NewReader(mdBytes))
 	doc := root.OwnerDocument()
-	mdFile.Meta = doc.Meta()
+	mdFile.Meta = normalizeMeta(doc.Meta())
 	title, ok := mdFile.Meta["title"].(string)
 	if !ok {
 		title = "Hello, World!"

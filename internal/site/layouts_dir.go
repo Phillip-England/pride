@@ -30,7 +30,6 @@ func CreateLayoutsDir(path string) (LayoutsDir, *syserr.Err) {
   	<body>
 		<div id='root'>
 			{{ template "header" . }}
-			{{ template "NavIndex" . }}
 			<main>{{ .Content }}</main>
 			{{ template "footer" . }}
 		</div>

@@ -1,0 +1,4 @@
+version = "0.0.1"
+dob = "2025-09-15T11:37:52Z"
+server = "https://www.example.com"
+theme = "dracula"

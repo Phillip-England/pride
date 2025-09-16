@@ -2,7 +2,6 @@ package build
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -32,8 +31,6 @@ func chopFirstDir(path string) string {
 
 func NewHtmlFile(rootDir string, route *server.Route, configFile site.ConfigFile, svr server.Server) (HtmlFile, *syserr.Err) {
 	var f HtmlFile
-	fmt.Println("================")
-	fmt.Println(string(route.HtmlBytes))
 	f.RootDir = rootDir
 	f.Path = filepath.Join(rootDir, strings.TrimSuffix(chopFirstDir(route.RelativePath), ".md") + ".html")
 	routeHtml := string(route.HtmlBytes)
