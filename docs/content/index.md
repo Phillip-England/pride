@@ -9,5 +9,9 @@ menus = []
 # Pride
 Simple Static Sites
 
+![Pride Logo](./static/logo.png)
+
+
 ## I love Pride
 This is so awesome!
+
