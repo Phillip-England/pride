@@ -8,41 +8,65 @@ import (
 )
 
 type Err struct {
-	File    string
-	Line    int
-	Message string
-	Err     error
+    File    string
+    Line    int
+    Message string
+    Err     error
 }
 
 func New(location *Location, format string, args ...any) *Err {
-	var serr Err
-	message := fmt.Sprintf(format, args...)
-	serr.File = location.File
-	serr.Line = location.Line
-	serr.Message = message
-	serr.Err = errors.New(message)
-	return &serr
+    message := fmt.Sprintf(format, args...)
+    return &Err{
+        File:    location.File,
+        Line:    location.Line,
+        Message: message,
+        Err:     errors.New(message),
+    }
 }
 
-func (e Err) Print() {
-	fmt.Fprintf(os.Stderr, "🚨 %s:%d — %s\n", e.File, e.Line, e.Message)
+func (e *Err) Error() string {
+    return fmt.Sprintf("syserr [%s:%d] %s", e.File, e.Line, e.Message)
 }
 
-func (e Err) Fail() {
-	fmt.Fprintf(os.Stderr, "🚨 %s:%d — %s\n", e.File, e.Line, e.Message)
-	os.Exit(1)
+func (e *Err) Unwrap() error {
+    return e.Err
 }
 
-func (e Err) Error() string {
-	return fmt.Sprintf("perr.Err [%s:%d] %s", e.File, e.Line, e.Message)
+func (e *Err) Print() {
+    fmt.Fprintf(os.Stderr, "🚨 %s:%d — %s\n", e.File, e.Line, e.Message)
+}
+
+func (e *Err) Fail() {
+    e.Print()
+    os.Exit(1)
 }
 
 type Location struct {
-	File string
-	Line int
+    File string
+    Line int
 }
 
 func Here() *Location {
-	_, file, line, _ := runtime.Caller(1)
-	return &Location{File: file, Line: line}
+    _, file, line, _ := runtime.Caller(1)
+    return &Location{File: file, Line: line}
+}
+
+func Consume(location *Location, err error) *Err {
+	if err == nil {
+		return nil
+	}
+	if serr, ok := err.(*Err); ok {
+		return &Err{
+			File:    location.File,
+			Line:    location.Line,
+			Message: serr.Message,
+			Err:     serr,
+		}
+	}
+	return &Err{
+		File:    location.File,
+		Line:    location.Line,
+		Message: err.Error(),
+		Err:     err,
+	}
 }

@@ -27,12 +27,10 @@ func CreateConfigFile(path string) (ConfigFile, *syserr.Err) {
 	config.Version = "0.0.1"
 	config.Server = "https://www.example.com"
 	config.Theme = "dracula"
-
 	config.Text = fmt.Sprintf(`version = "%s"
 dob = "%s"
 server = "%s"
 theme = "%s"`, config.Version, config.Dob, config.Server, config.Theme)
-
 	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
 		return config, syserr.New(syserr.Here(), "%s", err.Error())
@@ -78,7 +76,6 @@ func LoadConfigFile() (ConfigFile, *syserr.Err) {
 	if !foundConfig {
 		return config, syserr.New(syserr.Here(), "failed to locate pride.toml at any of the following locations:\n %v", checkedPaths)
 	}
-
 	return config, nil
 }
 

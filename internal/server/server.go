@@ -59,12 +59,27 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 			return svr, syserr.New(syserr.Here(), "%s", err.Error())
 		}
 		route.HtmlBytes = buf.Bytes()
-		svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
-			_, err := w.Write(route.HtmlBytes)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-		})
+		// index route (/) must contain 404 logic
+		if route.MarkdownFile.ServerPath == "/" {
+			svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/" {
+					w.WriteHeader(404)
+					w.Write([]byte("404 Not Found"))
+					return
+				}
+				_, err := w.Write(route.HtmlBytes)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			})
+		} else {
+			svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
+				_, err := w.Write(route.HtmlBytes)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			})
+		}
 	}
 
 	//
