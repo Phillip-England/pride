@@ -46,7 +46,7 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 	}
 	//
 	fs := http.FileServer(http.Dir(prideDir.StaticDir.Path))
-	svr.Mux.Handle("GET /static", http.StripPrefix("/static/", fs))
+	svr.Mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
 	//
 	for _, route := range svr.Routes {
 		// load the template and resulting html

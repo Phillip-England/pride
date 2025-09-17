@@ -93,10 +93,9 @@ type MarkdownFile struct {
 	Dob             string
 	IsDraft         bool
 	LayoutPath      string
-	Menus           []string
 }
 
-func CreateMarkdownFile(path string, title string, isDraft bool, menuNames []string, layoutPath string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
+func CreateMarkdownFile(path string, title string, isDraft bool, layoutPath string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
 	var mdFile MarkdownFile
 	dir := filepath.Dir(path)
 	err := os.MkdirAll(dir, 0755)
@@ -111,28 +110,27 @@ func CreateMarkdownFile(path string, title string, isDraft bool, menuNames []str
 	if title == "" {
 		title = TitleFromPath(path)
 	}
-	menuNameStr := "["
-	for i, menuName := range menuNames {
-		menuNameStr += "\""
-		menuNameStr += menuName
-		menuNameStr += "\""
-		if i == len(menuNames)-1 {
-			continue
-		}
-		menuNameStr += ", "
-	}
-	menuNameStr += "]"
+	// menuNameStr := "["
+	// for i, menuName := range menuNames {
+	// 	menuNameStr += "\""
+	// 	menuNameStr += menuName
+	// 	menuNameStr += "\""
+	// 	if i == len(menuNames)-1 {
+	// 		continue
+	// 	}
+	// 	menuNameStr += ", "
+	// }
+	// menuNameStr += "]"
 	markdownContent := fmt.Sprintf(`+++
 title = "%s"
 dob = "%s"
 draft = %t
 layout = "%s"
-menus = %s
 +++
 
 # A Header
 Some Content
-` + "```go\nfmt.Println(\"Hello, World!\")\n```", title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath, menuNameStr)
+` + "```go\nfmt.Println(\"Hello, World!\")\n```", title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath)
 	file.WriteString(markdownContent)
 	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
 	if serr != nil {
@@ -207,11 +205,11 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 		layout = filepath.Join(prideRootDir, layout)
 	}
 	mdFile.LayoutPath = layout
-	menus, ok := mdFile.Meta["menus"].([]string)
-	if !ok {
-		menus = []string{}
-	}
-	mdFile.Menus = menus
+	// menus, ok := mdFile.Meta["menus"].([]string)
+	// if !ok {
+	// 	menus = []string{}
+	// }
+	// mdFile.Menus = menus
 	// resolving the server path is platform specific
 	trimmed := strings.ReplaceAll(path, prideRootDir, "")
 	if strings.Contains(trimmed, "/") {
