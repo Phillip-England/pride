@@ -12,7 +12,7 @@ type CmdNew struct {
 	ContentType    contentType
 }
 
-func NewCmdNew() (*CmdNew, *syserr.Err) {
+func NewCmdNew() (*CmdNew, error) {
 	cmd := &CmdNew{}
 	argContentType, err := GetArg(2)
 	if err != nil {
@@ -32,7 +32,7 @@ func NewCmdNew() (*CmdNew, *syserr.Err) {
 	return cmd, nil
 }
 
-func (cmd CmdNew) GetOpCode() (int, *syserr.Err) {
+func (cmd CmdNew) GetOpCode() (int, error) {
 	switch cmd.ContentType {
 	case contentTypeSite:
 		return 1, nil

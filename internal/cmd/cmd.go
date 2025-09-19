@@ -1,14 +1,10 @@
 package cmd
 
-import (
-	"github.com/Phillip-England/pride/internal/syserr"
-)
-
 type Cmd interface {
-	GetOpCode() (int, *syserr.Err)
+	GetOpCode() (int, error)
 }
 
-func Extract() (Cmd, *syserr.Err) {
+func Extract() (Cmd, error) {
 	id := NewCmdId()
 	switch id {
 	case FlagNewNew:
@@ -18,21 +14,21 @@ func Extract() (Cmd, *syserr.Err) {
 		}
 		return cmd, nil
 	case FlagEmit:
-		cmd, serr := NewCmdEmit()
-		if serr != nil {
-			return nil, serr
+		cmd, err := NewCmdEmit()
+		if err != nil {
+			return nil, err
 		}
 		return cmd, nil
 	case FlagServe:
-		cmd, serr := NewCmdServe()
-		if serr != nil {
-			return nil, serr
+		cmd, err := NewCmdServe()
+		if err != nil {
+			return nil, err
 		}
 		return cmd, nil
 	case FlagBuild:
-		cmd, serr := NewCmdBuild()
-		if serr != nil {
-			return nil, serr
+		cmd, err := NewCmdBuild()
+		if err != nil {
+			return nil, err
 		}
 		return cmd, nil
 	default:

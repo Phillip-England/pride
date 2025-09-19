@@ -11,7 +11,7 @@ type CmdServe struct {
 	Port    int
 }
 
-func NewCmdServe() (*CmdServe, *syserr.Err) {
+func NewCmdServe() (*CmdServe, error) {
 	cmd := &CmdServe{}
 	argPort, err := GetArg(2)
 	if err != nil {
@@ -28,6 +28,6 @@ func NewCmdServe() (*CmdServe, *syserr.Err) {
 	return cmd, nil
 }
 
-func (cmd CmdServe) GetOpCode() (int, *syserr.Err) {
+func (cmd CmdServe) GetOpCode() (int, error) {
 	return 4, nil
 }

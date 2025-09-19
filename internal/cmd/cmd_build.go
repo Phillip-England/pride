@@ -10,7 +10,7 @@ type CmdBuild struct {
 	ArgDest string
 }
 
-func NewCmdBuild() (*CmdBuild, *syserr.Err) {
+func NewCmdBuild() (*CmdBuild, error) {
 	cmd := &CmdBuild{}
 	argDest, err := GetArg(2)
 	if err != nil {
@@ -24,6 +24,6 @@ func NewCmdBuild() (*CmdBuild, *syserr.Err) {
 	return cmd, nil
 }
 
-func (cmd CmdBuild) GetOpCode() (int, *syserr.Err) {
+func (cmd CmdBuild) GetOpCode() (int, error) {
 	return 5, nil
 }

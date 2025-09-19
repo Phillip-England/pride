@@ -9,21 +9,21 @@ type CmdEmit struct {
 	EmitKey    emitKey
 }
 
-func NewCmdEmit() (*CmdEmit, *syserr.Err) {
+func NewCmdEmit() (*CmdEmit, error) {
 	cmd := &CmdEmit{}
 	argEmitKey, err := GetArg(2)
 	if err != nil {
 		return cmd, syserr.New(syserr.Here(), "missing <EMITKEY> in `pride emit`")
 	}
-	emitKey, serr := validateEmitKey(argEmitKey)
-	if serr != nil {
-		return cmd, serr
+	emitKey, err := validateEmitKey(argEmitKey)
+	if err != nil {
+		return cmd, err
 	}
 	cmd.EmitKey = emitKey
 	return cmd, nil
 }
 
-func (cmd CmdEmit) GetOpCode() (int, *syserr.Err) {
+func (cmd CmdEmit) GetOpCode() (int, error) {
 	switch cmd.EmitKey {
 	case emitKeyNav:
 		return 3, nil
@@ -38,7 +38,7 @@ const (
 	emitKeyNav emitKey = iota
 )
 
-func validateEmitKey(argEmitKey string) (emitKey, *syserr.Err) {
+func validateEmitKey(argEmitKey string) (emitKey, error) {
 	switch argEmitKey {
 	case "nav":
 		return emitKeyNav, nil
