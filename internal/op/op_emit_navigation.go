@@ -14,7 +14,7 @@ type OpEmitNavigation struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *OpEmitNavigation) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpEmitNavigation) Exec(c cmd.Cmd) error {
 	_, ok := c.(*cmd.CmdEmit)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure")
@@ -38,7 +38,7 @@ func (op *OpEmitNavigation) Exec(c cmd.Cmd) *syserr.Err {
 	return nil
 }
 
-func OperationEmitNavigation(targetDir string, out string) (site.NavigationMenu, *syserr.Err) {
+func OperationEmitNavigation(targetDir string, out string) (site.NavigationMenu, error) {
 	var navMenu site.NavigationMenu
 	dir, serr := site.LoadPrideDir()
 	if serr != nil {

@@ -6,10 +6,10 @@ import (
 )
 
 type Op interface {
-	Exec(c cmd.Cmd) *syserr.Err
+	Exec(c cmd.Cmd) error
 }
 
-func OpNew(code int) (Op, *syserr.Err) {
+func OpNew(code int) (Op, error) {
 	switch code {
 	case 0:
 		return &OpHelp{Code: code}, nil

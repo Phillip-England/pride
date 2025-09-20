@@ -9,8 +9,8 @@ import (
 	"github.com/Phillip-England/pride/internal/syserr"
 )
 
-func LoadLayouts(t *template.Template, dir string) (*template.Template, *syserr.Err) {
-	var potErr *syserr.Err
+func LoadLayouts(t *template.Template, dir string) (*template.Template, error) {
+	var potErr error
 	filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			potErr = syserr.New(syserr.Here(), "%s", err.Error())
@@ -28,8 +28,8 @@ func LoadLayouts(t *template.Template, dir string) (*template.Template, *syserr.
 	return t, potErr
 }
 
-func LoadTemplates(t *template.Template, dir string) (*template.Template, *syserr.Err) {
-	var potErr *syserr.Err
+func LoadTemplates(t *template.Template, dir string) (*template.Template, error) {
+	var potErr error
 	filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			potErr = syserr.New(syserr.Here(), "%s", err.Error())

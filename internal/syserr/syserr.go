@@ -50,23 +50,3 @@ func Here() *Location {
     _, file, line, _ := runtime.Caller(1)
     return &Location{File: file, Line: line}
 }
-
-func Consume(location *Location, err error) *Err {
-	if err == nil {
-		return nil
-	}
-	if serr, ok := err.(*Err); ok {
-		return &Err{
-			File:    location.File,
-			Line:    location.Line,
-			Message: serr.Message,
-			Err:     serr,
-		}
-	}
-	return &Err{
-		File:    location.File,
-		Line:    location.Line,
-		Message: err.Error(),
-		Err:     err,
-	}
-}

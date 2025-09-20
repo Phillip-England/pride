@@ -12,14 +12,15 @@ type StaticDir struct {
 	CssFiles []CssFile
 }
 
-func CreateStaticDir(path string) (StaticDir, *syserr.Err) {
+func CreateStaticDir(path string) (StaticDir, error) {
 	var dir StaticDir
 	dir.Path = path
-	err := os.MkdirAll(path, 0755)
-	if err != nil {
+
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	defaultCssFile, serr := CreateCssFile(filepath.Join(path, "default.css"), `* {
+
+	defaultCssFile, err := CreateCssFile(filepath.Join(path, "default.css"), `* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -31,14 +32,15 @@ body {
   background: #fff;
   color: #000;
 }`)
-	if serr != nil {
-		return dir, serr
+	if err != nil {
+		return dir, err
 	}
+
 	dir.CssFiles = append(dir.CssFiles, defaultCssFile)
 	return dir, nil
 }
 
-func LoadStaticDir(path string) (StaticDir, *syserr.Err) {
+func LoadStaticDir(path string) (StaticDir, error) {
 	var dir StaticDir
 	dir.Path = path
 	return dir, nil

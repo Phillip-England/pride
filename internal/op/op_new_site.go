@@ -10,7 +10,7 @@ type OpNewSite struct {
 	Code int
 }
 
-func (op *OpNewSite) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpNewSite) Exec(c cmd.Cmd) error {
 	cmdNew, ok := c.(*cmd.CmdNew)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure")

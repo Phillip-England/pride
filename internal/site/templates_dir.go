@@ -12,7 +12,7 @@ type TemplatesDir struct {
 	TemplateFiles []TemplateFile
 }
 
-func CreateTemplatesDir(path string) (TemplatesDir, *syserr.Err) {
+func CreateTemplatesDir(path string) (TemplatesDir, error) {
 	var dir TemplatesDir
 	dir.Path = path
 	err := os.MkdirAll(path, 0755)
@@ -20,7 +20,7 @@ func CreateTemplatesDir(path string) (TemplatesDir, *syserr.Err) {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 
-	defaultTemplates, serr := CreateTemplateFile(filepath.Join(path, "templates.html"), `{{ define "header"}}
+	defaultTemplates, err := CreateTemplateFile(filepath.Join(path, "templates.html"), `{{ define "header"}}
 	<header>some header</header>
 {{ end }}
 
@@ -28,15 +28,15 @@ func CreateTemplatesDir(path string) (TemplatesDir, *syserr.Err) {
 	<footer>some footer</footer>
 {{ end }}
 	`)
-	if serr != nil {
-		return dir, serr
+	if err != nil {
+		return dir, err
 	}
 	dir.TemplateFiles = append(dir.TemplateFiles, defaultTemplates)
 	return dir, nil
 }
 
-func LoadTemplatesDir(path string) (TemplatesDir, *syserr.Err) {
+func LoadTemplatesDir(path string) (TemplatesDir) {
 	var dir TemplatesDir
 	dir.Path = path
-	return dir, nil
+	return dir
 }

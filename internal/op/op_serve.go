@@ -24,35 +24,35 @@ type OpServe struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *OpServe) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpServe) Exec(c cmd.Cmd) error {
 	cmdServe, ok := c.(*cmd.CmdServe)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure")
 	}
 	port := cmdServe.Port
-	if serr := OperationStartServer(port); serr != nil {
-		return serr
+	if err := OperationStartServer(port); err != nil {
+		return err
 	}
-	dir, serr := site.LoadPrideDir()
-	if serr != nil {
-		return serr
+	dir, err := site.LoadPrideDir()
+	if err != nil {
+		return err
 	}
-	serr = startFileWacher(dir.Path, port)
-	if serr != nil {
-		return serr
+	err = startFileWacher(dir.Path, port)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 
-func OperationStartServer(port int) *syserr.Err {
-    dir, serr := site.LoadPrideDir()
-    if serr != nil {
-        return serr
+func OperationStartServer(port int) error {
+    dir, err := site.LoadPrideDir()
+    if err != nil {
+        return err
     }
-    svr, serr := server.NewServer(port, dir)
-    if serr != nil {
-        return serr
+    svr, err := server.NewServer(port, dir)
+    if err != nil {
+        return err
     }
     srv := &http.Server{
         Addr:    svr.Addr,
@@ -71,7 +71,7 @@ func OperationStartServer(port int) *syserr.Err {
 }
 
 
-func startFileWacher(prideDirPath string, port int) *syserr.Err {
+func startFileWacher(prideDirPath string, port int) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return syserr.New(syserr.Here(), "%s", err.Error())
@@ -81,7 +81,7 @@ func startFileWacher(prideDirPath string, port int) *syserr.Err {
 	if err != nil {
 		return syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	errChan := make(chan *syserr.Err, 1)
+	errChan := make(chan error, 1)
 	go func() {
 		for {
 			select {
@@ -111,7 +111,7 @@ func startFileWacher(prideDirPath string, port int) *syserr.Err {
 	return nil
 }
 
-func onChange(port int, event fsnotify.Event) *syserr.Err {
+func onChange(port int, event fsnotify.Event) error {
     if event.Op != fsnotify.Write {
         return nil
     }

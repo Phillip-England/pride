@@ -17,104 +17,104 @@ type PrideDir struct {
 	Navigation   Navigation
 }
 
-func CreatePrideDir(path string) (PrideDir, *syserr.Err) {
+func CreatePrideDir(path string) (PrideDir, error) {
 	var dir PrideDir
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	dir.Path = absolutePath
-	err = os.MkdirAll(dir.Path, 0755)
-	if err != nil {
-		syserr.New(syserr.Here(), "%s", err.Error())
+
+	if err := os.MkdirAll(dir.Path, 0755); err != nil {
+		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
-	configFile, serr := CreateConfigFile(filepath.Join(absolutePath, "pride.toml"))
-	if serr != nil {
-		return dir, serr
+
+	configFile, err := CreateConfigFile(filepath.Join(absolutePath, "pride.toml"))
+	if err != nil {
+		return dir, err
 	}
 	dir.ConfigFile = configFile
+
 	contentDirPath := filepath.Join(absolutePath, "content")
 
-	// NOTE: the order in which we create directories matters
-	// this is because certain directories depend on each other
-	// for example, all .md files in the content directory
-	// will have an html template associated with them
-	// we will then check the templates diretory to ensure the template
-	// file actually exists, warning the user if they accidentally
-	// choose an invalid template
-	// creation should be done in the following order:
-	// 1. static dir (no dependancies)
-	// 2. templates dir (no dependancies)
+	// NOTE: the order in which we create directories matters:
+	// 1. static dir (no dependencies)
+	// 2. templates dir (no dependencies)
 	// 3. layouts dir (depends on templates)
 	// 4. content dir (depends on templates)
 
 	// 1
-	staticDir, serr := CreateStaticDir(filepath.Join(absolutePath, "static"))
-	if serr != nil {
-		return dir, serr
+	staticDir, err := CreateStaticDir(filepath.Join(absolutePath, "static"))
+	if err != nil {
+		return dir, err
 	}
 	dir.StaticDir = staticDir
 
 	// 2
-	templatesDir, serr := CreateTemplatesDir(filepath.Join(absolutePath, "templates"))
-	if serr != nil {
-		return dir, serr
+	templatesDir, err := CreateTemplatesDir(filepath.Join(absolutePath, "templates"))
+	if err != nil {
+		return dir, err
 	}
 	dir.TemplatesDir = templatesDir
 
 	// 3
-	layoutsDir, serr := CreateLayoutsDir(filepath.Join(absolutePath, "layouts"))
-	if serr != nil {
-		return dir, serr
+	layoutsDir, err := CreateLayoutsDir(filepath.Join(absolutePath, "layouts"))
+	if err != nil {
+		return dir, err
 	}
 	dir.LayoutsDir = layoutsDir
 
 	// 4
-	contentDir, serr := CreateContentDir(contentDirPath, configFile, dir.Path)
-	if serr != nil {
-		return dir, serr
+	contentDir, err := CreateContentDir(contentDirPath, configFile, dir.Path)
+	if err != nil {
+		return dir, err
 	}
 	dir.ContentDir = contentDir
 
 	return dir, nil
 }
 
-func LoadPrideDir() (PrideDir, *syserr.Err) {
+func LoadPrideDir() (PrideDir, error) {
 	var dir PrideDir
-	config, serr := LoadConfigFile()
-	if serr != nil {
-		return dir, serr
+
+	config, err := LoadConfigFile()
+	if err != nil {
+		return dir, err
 	}
 	dir.ConfigFile = config
+
 	absolutePath, err := filepath.Abs(filepath.Dir(config.Path))
 	if err != nil {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	dir.Path = absolutePath
-	contentDir, serr := LoadContentDir(filepath.Join(dir.Path, "content"), config.Theme, absolutePath)
-	if serr != nil {
-		return dir, serr
+
+	contentDir, err := LoadContentDir(filepath.Join(dir.Path, "content"), config.Theme, absolutePath)
+	if err != nil {
+		return dir, err
 	}
 	dir.ContentDir = contentDir
-	templatesDir, serr := LoadTemplatesDir(filepath.Join(dir.Path, "templates"))
-	if serr != nil {
-		return dir, serr
-	}
+
+	templatesDir := LoadTemplatesDir(filepath.Join(dir.Path, "templates"))
 	dir.TemplatesDir = templatesDir
-	layoutsDir, serr := LoadLayoutsDir(filepath.Join(dir.Path, "layouts"))
-	if serr != nil {
-		return dir, serr
+
+	layoutsDir, err := LoadLayoutsDir(filepath.Join(dir.Path, "layouts"))
+	if err != nil {
+		return dir, err
 	}
 	dir.LayoutsDir = layoutsDir
-	staticDir, serr := LoadStaticDir(filepath.Join(dir.Path, "static"))
-	if serr != nil {
-		return dir, serr
+
+	staticDir, err := LoadStaticDir(filepath.Join(dir.Path, "static"))
+	if err != nil {
+		return dir, err
 	}
 	dir.StaticDir = staticDir
-	nav, serr := LoadNavigation(dir.ContentDir)
-	if serr != nil {
-		return dir, serr
+
+	nav, err := LoadNavigation(dir.ContentDir)
+	if err != nil {
+		return dir, err
 	}
 	dir.Navigation = nav
+
 	return dir, nil
 }

@@ -20,18 +20,17 @@ import (
 )
 
 func normalizeMeta(meta map[string]any) map[string]any {
-    norm := make(map[string]any, len(meta))
-    for k, v := range meta {
-        norm[k] = v // keep original
-        if len(k) > 0 {
-            // make "title" into "Title"
-            upperKey := strings.ToUpper(k[:1]) + k[1:]
-            norm[upperKey] = v
-        }
-    }
-    return norm
+	norm := make(map[string]any, len(meta))
+	for k, v := range meta {
+		norm[k] = v // keep original
+		if len(k) > 0 {
+			// make "title" into "Title"
+			upperKey := strings.ToUpper(k[:1]) + k[1:]
+			norm[upperKey] = v
+		}
+	}
+	return norm
 }
-
 
 var lowercaseWords = map[string]bool{
 	"a": true, "an": true, "the": true,
@@ -86,7 +85,7 @@ type MarkdownFile struct {
 	Text            string
 	Theme           string
 	Html            string
-	Meta     map[string]any
+	Meta            map[string]any
 	FileName        string
 	PathWithoutBase string
 	Title           string
@@ -95,32 +94,24 @@ type MarkdownFile struct {
 	LayoutPath      string
 }
 
-func CreateMarkdownFile(path string, title string, isDraft bool, layoutPath string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, *syserr.Err) {
+func CreateMarkdownFile(path string, title string, isDraft bool, layoutPath string, configFile ConfigFile, prideDirPath string, contentDirPath string) (MarkdownFile, error) {
 	var mdFile MarkdownFile
 	dir := filepath.Dir(path)
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
+
 	file, err := os.Create(path)
 	if err != nil {
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 	defer file.Close()
+
 	if title == "" {
 		title = TitleFromPath(path)
 	}
-	// menuNameStr := "["
-	// for i, menuName := range menuNames {
-	// 	menuNameStr += "\""
-	// 	menuNameStr += menuName
-	// 	menuNameStr += "\""
-	// 	if i == len(menuNames)-1 {
-	// 		continue
-	// 	}
-	// 	menuNameStr += ", "
-	// }
-	// menuNameStr += "]"
+
 	markdownContent := fmt.Sprintf(`+++
 title = "%s"
 dob = "%s"
@@ -130,24 +121,31 @@ layout = "%s"
 
 # A Header
 Some Content
-` + "```go\nfmt.Println(\"Hello, World!\")\n```", title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath)
-	file.WriteString(markdownContent)
-	loadedMdFile, serr := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
-	if serr != nil {
-		return loadedMdFile, serr
+`+"```go\nfmt.Println(\"Hello, World!\")\n```",
+		title, time.Now().UTC().Format(time.RFC3339), isDraft, layoutPath)
+
+	if _, err := file.WriteString(markdownContent); err != nil {
+		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
+	}
+
+	loadedMdFile, err := LoadMarkdownFile(path, configFile.Theme, prideDirPath, contentDirPath)
+	if err != nil {
+		return loadedMdFile, err
 	}
 	return loadedMdFile, nil
 }
 
-func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDirPath string) (MarkdownFile, *syserr.Err) {
+func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDirPath string) (MarkdownFile, error) {
 	var mdFile MarkdownFile
 	mdBytes, err := os.ReadFile(path)
 	if err != nil {
 		return mdFile, syserr.New(syserr.Here(), "failed to read %s", path)
 	}
+
 	mdFile.Text = string(mdBytes)
 	mdFile.Path = path
 	mdFile.Theme = theme
+
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			highlighting.NewHighlighting(
@@ -162,8 +160,6 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
-		),
-		goldmark.WithParserOptions(
 			parser.WithAttribute(),
 		),
 		goldmark.WithRendererOptions(
@@ -172,32 +168,39 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 			html.WithUnsafe(),
 		),
 	)
+
 	var buf bytes.Buffer
 	context := parser.NewContext()
 	if err := md.Convert(mdBytes, &buf, parser.WithContext(context)); err != nil {
 		return mdFile, syserr.New(syserr.Here(), "%s", err.Error())
 	}
+
 	mdFile.Html = buf.String()
 	mdFile.FileName = filepath.Base(mdFile.Path)
 	mdFile.PathWithoutBase = strings.ReplaceAll(mdFile.Path, mdFile.FileName, "")
+
 	root := md.Parser().Parse(text.NewReader(mdBytes))
 	doc := root.OwnerDocument()
 	mdFile.Meta = normalizeMeta(doc.Meta())
+
 	title, ok := mdFile.Meta["title"].(string)
 	if !ok {
 		title = "Hello, World!"
 	}
 	mdFile.Title = title
+
 	dob, ok := mdFile.Meta["dob"].(string)
 	if !ok {
 		dob = time.Now().UTC().Format(time.RFC3339)
 	}
 	mdFile.Dob = dob
+
 	draft, ok := mdFile.Meta["draft"].(bool)
 	if !ok {
 		draft = true
 	}
 	mdFile.IsDraft = draft
+
 	layout, ok := mdFile.Meta["layout"].(string)
 	if !ok {
 		layout = filepath.Join(prideRootDir, "layouts", "default.html")
@@ -205,15 +208,11 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 		layout = filepath.Join(prideRootDir, layout)
 	}
 	mdFile.LayoutPath = layout
-	// menus, ok := mdFile.Meta["menus"].([]string)
-	// if !ok {
-	// 	menus = []string{}
-	// }
-	// mdFile.Menus = menus
-	// resolving the server path is platform specific
+
+	// Platform-specific server path resolution
 	trimmed := strings.ReplaceAll(path, prideRootDir, "")
 	if strings.Contains(trimmed, "/") {
-		// linux/macOS
+		// Linux/macOS
 		parts := strings.Split(trimmed, "/")
 		parts = parts[2:]
 		joined := strings.Join(parts, "/")
@@ -224,7 +223,7 @@ func LoadMarkdownFile(path string, theme string, prideRootDir string, contentDir
 		}
 		mdFile.ServerPath = joined
 	} else {
-		// windows
+		// Windows
 		parts := strings.Split(trimmed, "\\")
 		if len(parts) > 2 {
 			parts = parts[2:]

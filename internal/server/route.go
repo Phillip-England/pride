@@ -15,26 +15,23 @@ type Route struct {
 	LayoutName   string
 	Title        string
 	RelativePath string
-	HtmlBytes []byte
+	HtmlBytes    []byte
 }
 
-// 1. check if the .md file has a valid layout (one that exists)
-// 2. get the layout name
-// 3. get the relative path
-func NewRoute(prideDirPath string, mdFile site.MarkdownFile) (*Route, *syserr.Err) {
+func NewRoute(prideDirPath string, mdFile site.MarkdownFile) (*Route, error) {
 	route := &Route{}
 	route.MarkdownFile = mdFile
 	route.Path = mdFile.ServerPath
 	route.Title = mdFile.Title
-	// 1
+	// check if the .md file has a valid layout (one that exists)
 	_, err := os.Stat(mdFile.LayoutPath)
 	if err != nil {
 		return route, syserr.New(syserr.Here(), ".md file at %s points to a layout at %s which does not exist", mdFile.Path, mdFile.LayoutPath)
 	}
 	route.LayoutPath = mdFile.LayoutPath
-	// 2
+	// get the layout name
 	route.LayoutName = filepath.Base(route.LayoutPath)
-	// 3.
+	// get the relative path
 	relativePath, err := filepath.Rel(prideDirPath, mdFile.Path)
 	if err != nil {
 		return route, syserr.New(syserr.Here(), "%s", err.Error())

@@ -19,7 +19,7 @@ type Navigation struct {
 	Menus map[string]NavigationMenu
 }
 
-func DirNameToMenuName(contentDir ContentDir, path string) (string, *syserr.Err) {
+func DirNameToMenuName(contentDir ContentDir, path string) (string, error) {
 	subDirName := strings.Replace(path, contentDir.Path, "", 1)
 	if subDirName == "" {
 		return "Index", nil
@@ -58,19 +58,19 @@ func DirNameToMenuName(contentDir ContentDir, path string) (string, *syserr.Err)
 	return name, nil
 }
 
-func LoadNavigation(contentDir ContentDir) (Navigation, *syserr.Err) {
+func LoadNavigation(contentDir ContentDir) (Navigation, error) {
 	var nav Navigation
 	nav.Menus = make(map[string]NavigationMenu)
-	var potErr *syserr.Err
+	var potErr error
 
 	filepath.Walk(contentDir.Path, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() {
+		if info == nil || !info.IsDir() {
 			return nil
 		}
 
-		name, serr := DirNameToMenuName(contentDir, path)
-		if serr != nil {
-			potErr = serr
+		name, err := DirNameToMenuName(contentDir, path)
+		if err != nil {
+			potErr = err
 			return nil
 		}
 
@@ -86,9 +86,9 @@ func LoadNavigation(contentDir ContentDir) (Navigation, *syserr.Err) {
 			return nil
 		}
 
-		menu, serr := LoadMenu(name, path, contentDir)
-		if serr != nil {
-			potErr = serr
+		menu, err := LoadMenu(name, path, contentDir)
+		if err != nil {
+			potErr = err
 			return nil
 		}
 
@@ -112,17 +112,17 @@ type NavigationMenu struct {
 
 // 1. collect all the directories which have markdown files
 // 2. filter markdown parent dirs outside the menu's scope
-// 3. map each menu path to it's respective markdown files
+// 3. map each menu path to its respective markdown files
 // 4. generate navigation
-// 5. generate primary nav (non-collapsable)
-// 6. generating sub navigation
-// 7. create a go query document and extract the nav and list items
-// 8. go through each nav-item, and collect it's inner-text, then sort
-// 9. go through each nav-item in sorted order, remove it, then re-add to end of list
+// 5. generate primary nav (non-collapsible)
+// 6. generate sub navigation
+// 7. create a goquery document and extract the nav and list items
+// 8. collect each nav-item's inner-text, then sort
+// 9. reorder DOM nodes based on sorted titles
 // 10. retrieve the sorted html
 // 11. add a <script> to enable sub-menu toggling on click
-// 12. wrap the nav in a valid go html {{ define }} clause
-func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMenu, *syserr.Err) {
+// 12. wrap the nav in a Go HTML {{ define }} clause
+func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMenu, error) {
 	var menu NavigationMenu
 	menu.Name = name
 	menu.Path = menuPath
@@ -167,9 +167,9 @@ func LoadMenu(name string, menuPath string, contentDir ContentDir) (NavigationMe
 	menu.Html = "<nav class='pride-nav'><ul>"
 
 	for i, dir := range menu.MarkdownParentDirs {
-		menuName, serr := DirNameToMenuName(contentDir, dir)
-		if serr != nil {
-			return menu, serr
+		menuName, err := DirNameToMenuName(contentDir, dir)
+		if err != nil {
+			return menu, err
 		}
 
 		mdFiles, ok := menu.MarkdownToParentMap[dir]

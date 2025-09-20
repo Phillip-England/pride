@@ -15,39 +15,40 @@ type Server struct {
 	Routes              []*Route
 	Port                int
 	Mux                 *http.ServeMux
-	Addr string
-	Html string
+	Addr                string
+	Html                string
 }
 
-
-func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
+func NewServer(port int, prideDir site.PrideDir) (Server, error) {
 	var svr Server
 	svr.Port = port
 	svr.Mux = http.NewServeMux()
 	tmpl := template.New("")
-	//
-	tmpl, serr := LoadLayouts(tmpl, prideDir.LayoutsDir.Path)
-	if serr != nil {
-		return svr, serr
+
+	tmpl, err := LoadLayouts(tmpl, prideDir.LayoutsDir.Path)
+	if err != nil {
+		return svr, err
 	}
-	//
-	tmpl, serr = LoadTemplates(tmpl, prideDir.TemplatesDir.Path)
-	if serr != nil {
-		return svr, serr
+
+	tmpl, err = LoadTemplates(tmpl, prideDir.TemplatesDir.Path)
+	if err != nil {
+		return svr, err
 	}
+
 	svr.LayoutsAndTemplates = tmpl
 	svr.Routes = []*Route{}
+
 	for _, mdFile := range prideDir.ContentDir.MarkdownFiles {
-		route, serr := NewRoute(prideDir.Path, mdFile)
-		if serr != nil {
-			return svr, serr
+		route, err := NewRoute(prideDir.Path, mdFile)
+		if err != nil {
+			return svr, err
 		}
 		svr.Routes = append(svr.Routes, route)
 	}
-	//
+
 	fs := http.FileServer(http.Dir(prideDir.StaticDir.Path))
 	svr.Mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
-	//
+
 	for _, route := range svr.Routes {
 		// load the template and resulting html
 		var buf bytes.Buffer
@@ -59,6 +60,7 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 			return svr, syserr.New(syserr.Here(), "%s", err.Error())
 		}
 		route.HtmlBytes = buf.Bytes()
+
 		// index route (/) must contain 404 logic
 		if route.MarkdownFile.ServerPath == "/" {
 			svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +84,6 @@ func NewServer(port int, prideDir site.PrideDir) (Server, *syserr.Err) {
 		}
 	}
 
-	//
 	portStr := strconv.Itoa(port)
 	host := "localhost"
 	addr := host + ":" + portStr

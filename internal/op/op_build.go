@@ -11,7 +11,7 @@ type OpBuild struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *OpBuild) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpBuild) Exec(c cmd.Cmd) error {
 	cmdBuild, ok := c.(*cmd.CmdBuild)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure")

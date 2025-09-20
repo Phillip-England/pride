@@ -13,7 +13,7 @@ type OpNewContent struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpNewContent) Exec(c cmd.Cmd) error {
 	cmdNew, ok := c.(*cmd.CmdNew)
 	if !ok {
 		return syserr.New(syserr.Here(), "type assertion failure")
@@ -25,31 +25,17 @@ func (op *OpNewContent) Exec(c cmd.Cmd) *syserr.Err {
 	return nil
 }
 
-// 1. new content must be unique
-// 2. the names within menuNames must all begin with an uppercase letter
-func OperationNewContent(destination string, isDraft bool) (site.MarkdownFile, *syserr.Err) {
+func OperationNewContent(destination string, isDraft bool) (site.MarkdownFile, error) {
 	dir, serr := site.LoadPrideDir()
 	if serr != nil {
 		return site.MarkdownFile{}, serr
 	}
-	// 1
+	// new content must be unique
 	_, err := os.Stat(destination)
 	if err == nil {
 		return site.MarkdownFile{}, syserr.New(syserr.Here(), "%s already exists", destination)
 	}
-	// 2
-	// alteredMenuNames := []string{}
-	// for _, menuName := range menuNames {
-	// 	menuNameRunes := []rune(menuName)
-	// 	menuNameFirstChar := string(menuNameRunes[0])
-	// 	var menuNameRemainingRunes []rune
-	// 	if len(menuNameRunes) > 1 {
-	// 		menuNameRemainingRunes = menuNameRunes[1:]
-	// 	}
-	// 	menuNameFirstChar = strings.ToUpper(menuNameFirstChar)
-	// 	menuName = menuNameFirstChar + string(menuNameRemainingRunes)
-	// 	alteredMenuNames = append(alteredMenuNames, menuName)
-	// }
+	// the names within menuNames must all begin with an uppercase letter
 	mdFile, serr := site.CreateMarkdownFile(destination, "", isDraft, "/layouts/default.html", dir.ConfigFile, dir.Path, dir.ContentDir.Path)
 	if serr != nil {
 		return mdFile, serr

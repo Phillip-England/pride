@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/Phillip-England/pride/internal/cmd"
-	"github.com/Phillip-England/pride/internal/syserr"
 )
 
 type OpHelp struct {
@@ -12,7 +11,7 @@ type OpHelp struct {
 	Cmd  cmd.Cmd
 }
 
-func (op *OpHelp) Exec(c cmd.Cmd) *syserr.Err {
+func (op *OpHelp) Exec(c cmd.Cmd) error {
 	fmt.Println(`🐍 pride
 A dead-simple, hugo-inspired, static-site generator.
 

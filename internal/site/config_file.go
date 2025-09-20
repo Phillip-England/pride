@@ -20,7 +20,7 @@ type ConfigFile struct {
 	Theme        string
 }
 
-func CreateConfigFile(path string) (ConfigFile, *syserr.Err) {
+func CreateConfigFile(path string) (ConfigFile, error) {
 	var config ConfigFile
 	config.Path = path
 	config.Dob = time.Now().UTC().Format(time.RFC3339)
@@ -45,7 +45,7 @@ theme = "%s"`, config.Version, config.Dob, config.Server, config.Theme)
 	return config, nil
 }
 
-func LoadConfigFile() (ConfigFile, *syserr.Err) {
+func LoadConfigFile() (ConfigFile, error) {
 	var config ConfigFile
 	foundConfig := false
 	dir, err := os.Getwd()
@@ -79,7 +79,7 @@ func LoadConfigFile() (ConfigFile, *syserr.Err) {
 	return config, nil
 }
 
-func (config ConfigFile) Create() *syserr.Err {
+func (config ConfigFile) Create() error {
 	file, err := os.OpenFile(config.Path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
 		return syserr.New(syserr.Here(), "%s", err.Error())
