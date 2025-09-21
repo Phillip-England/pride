@@ -3,8 +3,10 @@ package server
 import (
 	"bytes"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Phillip-England/pride/internal/site"
 	"github.com/Phillip-England/pride/internal/syserr"
@@ -17,6 +19,16 @@ type Server struct {
 	Mux                 *http.ServeMux
 	Addr                string
 	Html                string
+}
+
+// Middleware for logging requests in the format: [METHOD] [PATH] [DURATION]
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		elapsed := time.Since(start)
+		log.Printf("[%s] %s %s", r.Method, r.URL.Path, elapsed)
+	})
 }
 
 func NewServer(port int, prideDir site.PrideDir) (Server, error) {
@@ -38,6 +50,17 @@ func NewServer(port int, prideDir site.PrideDir) (Server, error) {
 	svr.LayoutsAndTemplates = tmpl
 	svr.Routes = []*Route{}
 
+	// --- Serve favicon at /favicon.ico ---
+	faviconPath := prideDir.StaticDir.FaviconFile.Path
+	svr.Mux.Handle("GET /favicon.ico", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, faviconPath)
+	})))
+
+	// Static file server for everything else under /static/
+	fs := http.FileServer(http.Dir(prideDir.StaticDir.Path))
+	svr.Mux.Handle("GET /static/", loggingMiddleware(http.StripPrefix("/static/", fs)))
+
+	// Load routes for markdown files
 	for _, mdFile := range prideDir.ContentDir.MarkdownFiles {
 		route, err := NewRoute(prideDir.Path, mdFile)
 		if err != nil {
@@ -46,11 +69,8 @@ func NewServer(port int, prideDir site.PrideDir) (Server, error) {
 		svr.Routes = append(svr.Routes, route)
 	}
 
-	fs := http.FileServer(http.Dir(prideDir.StaticDir.Path))
-	svr.Mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
-
+	// Render templates for each route
 	for _, route := range svr.Routes {
-		// load the template and resulting html
 		var buf bytes.Buffer
 		err := svr.LayoutsAndTemplates.ExecuteTemplate(&buf, route.LayoutName, map[string]interface{}{
 			"Meta":    route.MarkdownFile.Meta,
@@ -61,32 +81,19 @@ func NewServer(port int, prideDir site.PrideDir) (Server, error) {
 		}
 		route.HtmlBytes = buf.Bytes()
 
-		// index route (/) must contain 404 logic
-		if route.MarkdownFile.ServerPath == "/" {
-			svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != "/" {
-					w.WriteHeader(404)
-					w.Write([]byte("404 Not Found"))
-					return
-				}
-				_, err := w.Write(route.HtmlBytes)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-			})
-		} else {
-			svr.Mux.HandleFunc("GET "+route.MarkdownFile.ServerPath, func(w http.ResponseWriter, r *http.Request) {
-				_, err := w.Write(route.HtmlBytes)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-			})
-		}
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if route.MarkdownFile.ServerPath == "/" && r.URL.Path != "/" {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte("404 Not Found"))
+				return
+			}
+			w.Write(route.HtmlBytes)
+		})
+
+		svr.Mux.Handle("GET "+route.MarkdownFile.ServerPath, loggingMiddleware(handler))
 	}
 
 	portStr := strconv.Itoa(port)
-	host := "localhost"
-	addr := host + ":" + portStr
-	svr.Addr = addr
+	svr.Addr = "localhost:" + portStr
 	return svr, nil
 }

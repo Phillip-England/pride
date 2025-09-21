@@ -1,11 +1,14 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 
 	"github.com/Phillip-England/pride/internal/cmd"
 	"github.com/Phillip-England/pride/internal/op"
 )
+
+
 
 func main() {
 	command, err := cmd.Extract()

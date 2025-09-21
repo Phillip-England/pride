@@ -10,6 +10,8 @@ import (
 type StaticDir struct {
 	Path     string
 	CssFiles []CssFile
+	FaviconFile FaviconFile
+	HasFavicon bool
 }
 
 func CreateStaticDir(path string) (StaticDir, error) {
@@ -37,11 +39,23 @@ body {
 	}
 
 	dir.CssFiles = append(dir.CssFiles, defaultCssFile)
+	favicon, err := CreateFaviconFile(filepath.Join(path, "favicon.ico"))
+	if err != nil {
+		return dir, err
+	}
+	dir.FaviconFile = favicon
 	return dir, nil
 }
 
 func LoadStaticDir(path string) (StaticDir, error) {
 	var dir StaticDir
 	dir.Path = path
+	favicon, err := LoadFaviconFile(filepath.Join(path, "favicon.ico"))
+	if err != nil {
+		dir.HasFavicon = false
+	} else {
+		dir.HasFavicon = true
+	}
+	dir.FaviconFile = favicon
 	return dir, nil
 }

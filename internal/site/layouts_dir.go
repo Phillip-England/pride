@@ -21,12 +21,13 @@ func CreateLayoutsDir(path string) (LayoutsDir, error) {
 		return dir, syserr.New(syserr.Here(), "%s", err.Error())
 	}
 
-	// Create default layout file
+	// Create default layout file with favicon link
 	defaultLayout, err := CreateLayoutFile(filepath.Join(path, "default.html"), `<!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="icon" href="/favicon.ico" type="image/x-icon">
 		<link rel="stylesheet" href="/static/default.css">
 		<title>{{ .Meta.Title }}</title>
 	</head>
@@ -45,6 +46,7 @@ func CreateLayoutsDir(path string) (LayoutsDir, error) {
 	dir.LayoutFiles = append(dir.LayoutFiles, defaultLayout)
 	return dir, nil
 }
+
 
 func LoadLayoutsDir(path string) (LayoutsDir, error) {
 	var dir LayoutsDir
